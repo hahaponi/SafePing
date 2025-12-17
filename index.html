@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Final Alignment</title>
+    <title>SafePing Final Map</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -25,6 +25,17 @@
 
         #app { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; }
 
+        /* --- SCREENS --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b141a; display: none; flex-direction: column;
+            z-index: 10;
+        }
+        .screen.active { display: flex; }
+
+        /* CHAT SCREEN */
+        #screen-chat { z-index: 100; background: #0b141a; }
+
         /* --- HEADER --- */
         .header {
             height: 60px; background: #1f2c34; display: flex; align-items: center;
@@ -33,8 +44,20 @@
         }
         .title { font-size: 20px; font-weight: 600; color: white; }
 
-        /* --- CONTENT --- */
+        /* --- BACK BUTTON --- */
+        .back-click-area {
+            padding: 10px 30px 10px 0;
+            cursor: pointer; display: flex; align-items: center;
+        }
+
+        /* --- CONTENT SCROLL --- */
         .content { flex: 1; overflow-y: auto; position: relative; }
+
+        /* --- TABS --- */
+        .tabs { height: 60px; background: #1f2c34; display: flex; border-top: 1px solid #333; flex-shrink: 0; }
+        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; }
+        .tab.active { color: #00a884; }
+        .tab i { font-size: 24px; margin-bottom: 4px; }
 
         /* --- CONTACT LIST --- */
         .contact-item {
@@ -48,61 +71,60 @@
             font-size: 20px; font-weight: bold; color: white; flex-shrink: 0;
         }
 
-        /* --- CHAT AREA (THE FIX) --- */
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0b141a; display: none; flex-direction: column; z-index: 10;
-        }
-        .screen.active { display: flex; }
+        /* --- SETTINGS --- */
+        .card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
+        .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
         
-        /* CHAT BACKGROUND */
+        /* --- GOOGLE MAPS STYLE CONTAINER --- */
+        #map-box { height: 250px; width: 100%; border-radius: 8px; margin: 10px 0; position: relative; }
+        
+        /* SEARCH BAR INSIDE MAP */
+        .map-search-container {
+            position: absolute; top: 10px; left: 10px; right: 10px;
+            display: flex; gap: 5px; z-index: 500;
+        }
+        .map-input {
+            flex: 1; background: white; color: black; border: none;
+            padding: 10px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 14px;
+        }
+        .map-go-btn {
+            background: #4285F4; color: white; border: none;
+            padding: 0 15px; border-radius: 4px; font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        /* CURRENT LOCATION BUTTON (GPS) */
+        .gps-btn {
+            position: absolute; bottom: 10px; right: 10px;
+            width: 40px; height: 40px; background: white;
+            border-radius: 50%; z-index: 500;
+            display: flex; align-items: center; justify-content: center;
+            color: #666; font-size: 18px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer;
+        }
+        .gps-btn:active { background: #f0f0f0; }
+
+        /* TEST BUTTONS */
+        .test-btn { background:#2a3942; color:#00a884; border:1px solid #00a884; padding:12px; width:100%; border-radius:8px; font-weight:bold; margin-bottom:10px; }
+
+        /* --- CHAT AREA --- */
         #chat-bg {
             min-height: 100%;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay; background-color: #0b141a;
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            width: 100%;
+            padding: 15px; display: flex; flex-direction: column; gap: 8px; 
         }
 
-        /* MESSAGE BUBBLES - STRICT WIDTH AND ALIGNMENT */
         .msg { 
-            max-width: 65%; /* VERY SMALL WIDTH TO FORCE SEPARATION */
-            padding: 10px 14px; 
-            border-radius: 8px; 
-            font-size: 16px; 
-            line-height: 1.4; 
-            position: relative; 
-            word-wrap: break-word; 
-            margin-bottom: 10px;
-            display: block;
-            clear: both;
+            max-width: 65%; padding: 10px 14px; border-radius: 8px; font-size: 16px; 
+            line-height: 1.4; position: relative; word-wrap: break-word; margin-bottom: 10px;
+            display: block; clear: both;
         }
         
-        /* LEFT SIDE (THEM) - FORCED LEFT */
-        .msg.in { 
-            background: #1f2c34; 
-            color: white;
-            align-self: flex-start; 
-            margin-right: auto; /* PUSHES IT TO THE LEFT */
-            margin-left: 0;
-            border-top-left-radius: 0; 
-            text-align: left;
-        }
-        
-        /* RIGHT SIDE (YOU) - FORCED RIGHT */
-        .msg.out { 
-            background: #005c4b; 
-            color: white;
-            align-self: flex-end; 
-            margin-left: auto; /* PUSHES IT TO THE RIGHT */
-            margin-right: 0;
-            border-top-right-radius: 0; 
-            text-align: left;
-        }
+        .msg.in { background: #1f2c34; align-self: flex-start; float: left; margin-right: auto; border-top-left-radius: 0; }
+        .msg.out { background: #005c4b; align-self: flex-end; float: right; margin-left: auto; border-top-right-radius: 0; }
 
-        /* --- FOOTER --- */
         .chat-footer {
             height: 65px; background: #1f2c34; display: flex; align-items: center;
             padding: 5px 10px; flex-shrink: 0;
@@ -117,23 +139,17 @@
             display: flex; align-items: center; justify-content: center; font-size: 18px; color: white;
         }
 
-        /* --- SETTINGS --- */
-        .card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
-        .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
-        #map-box { height: 180px; width: 100%; border-radius: 8px; margin: 10px 0; }
-        
         /* AUTO ALERT */
         .auto-alert { width: 100%; background: rgba(0, 168, 132, 0.2); border: 1px solid #00a884; border-radius: 10px; padding: 12px; text-align: center; }
         .mini-map { width: 100%; height: 100px; background: #333; margin-top: 5px; background-size: cover; background-position: center; border-radius: 5px; }
 
-        /* TABS */
-        .tabs { height: 60px; background: #1f2c34; display: flex; border-top: 1px solid #333; flex-shrink: 0; }
-        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; }
-        .tab.active { color: #00a884; }
-        .tab i { font-size: 24px; margin-bottom: 4px; }
-        
-        /* BACK BUTTON AREA */
-        .back-click-area { padding: 15px; cursor: pointer; display: flex; align-items: center; z-index: 1000; }
+        /* PULSING DOT (Current Location Style) */
+        .pulse-icon {
+            width: 16px; height: 16px; border-radius: 50%; background: #4285F4;
+            border: 2px solid white; box-shadow: 0 0 0 10px rgba(66, 133, 244, 0.3);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(66, 133, 244, 0); } 100% { box-shadow: 0 0 0 0 rgba(66, 133, 244, 0); } }
 
     </style>
 </head>
@@ -146,9 +162,11 @@
             <span class="title">SafePing</span>
             <i class="fas fa-search" style="color:#8696a0; font-size:20px;"></i>
         </div>
+        
         <div class="content">
             <div id="contact-list"></div>
         </div>
+
         <div class="tabs">
             <div class="tab active" onclick="nav('home')"><i class="fas fa-comment-alt"></i><span>Chats</span></div>
             <div class="tab" onclick="nav('config')"><i class="fas fa-cog"></i><span>Settings</span></div>
@@ -160,21 +178,33 @@
         <div class="content" style="padding:10px;">
             <div class="card">
                 <div style="color:#ef4444; font-weight:bold; margin-bottom:5px;">BATTERY PROTOCOL</div>
-                <div style="color:#8696a0; font-size:12px;">Move slider to 10% to test</div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-                    <input type="range" id="batt-slider" style="width:75%" min="1" max="100" value="85" oninput="updateBattery(this.value)">
-                    <span id="b-val" style="color:#ef4444; font-weight:bold;">85%</span>
+                <div style="font-size:12px; color:#8696a0; margin-bottom:10px;">
+                    Current Device Level: <span id="real-batt-level" style="color:white; font-weight:bold;">--%</span>
                 </div>
+                
                 <select id="batt-contact" class="full-inp"></select>
-                <input type="text" id="batt-msg" class="full-inp" value="Battery Low.">
+                <input type="text" id="batt-msg" class="full-inp" value="Battery Critical. Call Landline.">
+                
+                <button class="test-btn" onclick="triggerBattery()">TEST BATTERY ALERT</button>
             </div>
             
             <div class="card">
                 <div style="color:#00a884; font-weight:bold; margin-bottom:5px;">LOCATION PROTOCOL</div>
-                <div id="map-box"></div>
-                <button onclick="triggerLocation()" style="background:#2a3942; color:#00a884; border:1px solid #00a884; padding:12px; width:100%; border-radius:8px; font-weight:bold;">TEST LOCATION ALERT</button>
+                
+                <div id="map-box">
+                    <div class="map-search-container">
+                        <input type="text" id="loc-search" class="map-input" placeholder="Search destination...">
+                        <button class="map-go-btn" onclick="searchLoc()">GO</button>
+                    </div>
+                    <div class="gps-btn" onclick="locateUser()">
+                        <i class="fas fa-crosshairs"></i>
+                    </div>
+                </div>
+                
                 <select id="loc-contact" class="full-inp"></select>
-                <input type="text" id="loc-msg" class="full-inp" value="Reached safely.">
+                <input type="text" id="loc-msg" class="full-inp" value="I have reached safely.">
+                
+                <button class="test-btn" onclick="triggerLocation()">TEST LOCATION ALERT</button>
             </div>
         </div>
         <div class="tabs">
@@ -214,26 +244,38 @@
 </div>
 
 <script>
+    // --- MASSIVE CONTACT LIST ---
     const DB = [
         {name:"Mom ❤️", color:"#e91e63", last:"Be safe."},
         {name:"Dad", color:"#3b82f6", last:"Okay."},
-        {name:"Rahul", color:"#f59e0b", last:"Where r u?"},
-        {name:"Priya", color:"#8b5cf6", last:"See you."},
-        {name:"Emergency", color:"#ef4444", last:"Active"}
+        {name:"Rahul (Bro)", color:"#f59e0b", last:"Where r u?"},
+        {name:"Priya Sharma", color:"#8b5cf6", last:"See you."},
+        {name:"Amit Kumar", color:"#10b981", last:"Notes?"},
+        {name:"Suresh Uncle", color:"#6366f1", last:"Hello."},
+        {name:"Anjali Gupta", color:"#ec4899", last:"Done."},
+        {name:"Emergency SOS", color:"#ef4444", last:"Active"},
+        {name:"Cab Driver", color:"#64748b", last:"Arriving..."},
+        {name:"College Group", color:"#f97316", last:"Exam tomorrow"},
+        {name:"Neha Reddy", color:"#14b8a6", last:"Called you."},
+        {name:"Vikram Singh", color:"#8b5cf6", last:"Coming?"},
+        {name:"Deepak", color:"#f59e0b", last:"Yes."},
+        {name:"Office", color:"#334155", last:"Meeting at 5"},
+        {name:"Gym Trainer", color:"#ef4444", last:"Leg day"}
     ];
 
-    let map, marker, activeContact;
+    let map, marker, currentUserMarker, activeContact;
     let config = { batt: { to:"Mom ❤️", msg:"Battery Low."}, loc: { to:"Dad", msg:"Reached safely."} };
 
     window.onload = () => {
-        renderContacts();
+        renderContacts(DB);
         populateSettings();
+        initBattery(); 
     };
 
-    function renderContacts() {
-        const list = document.getElementById('contact-list');
-        list.innerHTML = "";
-        DB.forEach(c => {
+    function renderContacts(list) {
+        const div = document.getElementById('contact-list');
+        div.innerHTML = "";
+        list.forEach(c => {
             const el = document.createElement('div');
             el.className = 'contact-item';
             el.onclick = () => openChat(c.name); 
@@ -244,7 +286,7 @@
                     <div style="color:#8696a0; font-size:14px;">${c.last}</div>
                 </div>
             `;
-            list.appendChild(el);
+            div.appendChild(el);
         });
     }
 
@@ -280,7 +322,6 @@
         document.getElementById('chat-av').innerText = c.name[0];
         document.getElementById('chat-av').style.background = c.color;
         
-        // RESET MESSAGES WITH CORRECT SIDES
         document.getElementById('msg-list').innerHTML = `
             <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
             <div class="msg out">${c.last}</div>
@@ -290,14 +331,12 @@
     function closeChat() {
         document.getElementById('screen-chat').classList.remove('active');
         document.getElementById('screen-home').classList.add('active');
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab')[0].classList.add('active');
     }
 
     function sendMsg() {
         const inp = document.getElementById('msg-input');
         if(!inp.value) return;
-        addMsg(inp.value, 'out'); // USER SENDER -> RIGHT
+        addMsg(inp.value, 'out'); 
         inp.value = "";
     }
 
@@ -310,12 +349,20 @@
         scroll.scrollTop = scroll.scrollHeight;
     }
 
-    // --- AUTOMATION SIMULATION ---
-    function updateBattery(val) {
-        document.getElementById('b-val').innerText = val + "%";
-        if(val <= 10) {
-            triggerBattery();
+    // --- REAL BATTERY ---
+    function initBattery() {
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(function(battery) {
+                updateBattUI(battery);
+                battery.addEventListener('levelchange', function() { updateBattUI(battery); });
+            });
         }
+    }
+
+    function updateBattUI(battery) {
+        const level = Math.round(battery.level * 100);
+        document.getElementById('real-batt-level').innerText = level + "%";
+        if(level <= 10) triggerBattery(); 
     }
 
     function triggerBattery() {
@@ -329,7 +376,7 @@
                 <b style="color:#ef4444">⚡ LOW BATTERY</b><br>
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.batt.msg}</div>
             </div>
-        `, 'out', true); // ALIGN RIGHT
+        `, 'out', true); 
     }
 
     function triggerLocation() {
@@ -344,14 +391,56 @@
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.loc.msg}</div>
                 <div class="mini-map" style="background-image:url('https://a.basemaps.cartocdn.com/dark_all/13/5000/3000.png')"></div>
             </div>
-        `, 'out', true); // ALIGN RIGHT
+        `, 'out', true); 
     }
 
+    // --- GOOGLE MAPS STYLE LOGIC ---
     function initMap() {
         if(map) { map.invalidateSize(); return; }
-        map = L.map('map-box').setView([20.59, 78.96], 5);
+        map = L.map('map-box').setView([20.59, 78.96], 10); // Zoomed out initially
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:''}).addTo(map);
     }
+
+    // 1. SEARCH AND DROP RED PIN (DESTINATION)
+    function searchLoc() {
+        const q = document.getElementById('loc-search').value;
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`).then(r=>r.json()).then(d=>{
+            if(d.length){ 
+                map.setView([d[0].lat, d[0].lon], 14); 
+                if(marker) map.removeLayer(marker); 
+                marker=L.marker([d[0].lat, d[0].lon]).addTo(map).bindPopup("Destination").openPopup(); 
+            }
+        });
+    }
+
+    // 2. LOCATE ME (BLUE DOT)
+    function locateUser() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Fly to location
+                map.setView([lat, lng], 15);
+
+                // Add Blue Pulsing Dot
+                if(currentUserMarker) map.removeLayer(currentUserMarker);
+                
+                var blueDot = L.divIcon({
+                    className: 'pulse-icon',
+                    iconSize: [16, 16]
+                });
+                
+                currentUserMarker = L.marker([lat, lng], {icon: blueDot}).addTo(map).bindPopup("You are here").openPopup();
+
+            }, () => {
+                alert("Location access denied or unavailable.");
+            });
+        } else {
+            alert("Browser does not support Geolocation");
+        }
+    }
+
 </script>
 </body>
 </html>
