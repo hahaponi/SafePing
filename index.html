@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Final</title>
+    <title>SafePing Fixed</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -20,14 +20,23 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #e9edef;
             overflow: hidden;
-            position: fixed; /* Lock screen */
+            position: fixed;
         }
 
         #app { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; }
 
-        /* --- INVISIBLE TRIGGERS (TOP CORNERS) --- */
-        .trigger-left { position: absolute; top: 0; left: 0; width: 80px; height: 60px; z-index: 99999; }
-        .trigger-right { position: absolute; top: 0; right: 0; width: 80px; height: 60px; z-index: 99999; }
+        /* --- INVISIBLE TRIGGERS (MOVED TO BOTTOM TO AVOID BACK BUTTON) --- */
+        /* Tap the very bottom left corner of the screen for Location */
+        .trigger-left { 
+            position: absolute; bottom: 0; left: 0; width: 60px; height: 60px; 
+            z-index: 99999; 
+            /* background: red; opacity: 0.1; Uncomment to see hit box for testing */
+        }
+        /* Tap the very bottom right corner of the screen for Battery */
+        .trigger-right { 
+            position: absolute; bottom: 0; right: 0; width: 60px; height: 60px; 
+            z-index: 99999; 
+        }
 
         /* --- SCREENS --- */
         .screen {
@@ -37,7 +46,7 @@
         }
         .screen.active { display: flex; }
 
-        /* CHAT SCREEN (Overlay) */
+        /* CHAT SCREEN OVERLAY */
         #screen-chat { z-index: 100; background: #0b141a; }
 
         /* --- HEADER --- */
@@ -48,7 +57,16 @@
         }
         .title { font-size: 20px; font-weight: 600; color: white; }
 
-        /* --- CONTENT SCROLL --- */
+        /* --- BACK BUTTON STYLE --- */
+        .back-btn-area {
+            padding: 10px 15px 10px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            z-index: 1000; /* Super high to ensure clickability */
+        }
+
+        /* --- CONTENT --- */
         .content { flex: 1; overflow-y: auto; position: relative; }
 
         /* --- TABS --- */
@@ -56,21 +74,24 @@
         .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; }
         .tab.active { color: #00a884; }
         .tab i { font-size: 24px; margin-bottom: 4px; }
-        
+
         /* --- CONTACT LIST --- */
         .contact { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .contact:active { background: #202c33; }
         .avatar { width: 50px; height: 50px; border-radius: 50%; background: #667781; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: white; }
 
-        /* --- CHAT VIEW --- */
+        /* --- CHAT VIEW (FLEXBOX FIX FOR ALIGNMENT) --- */
         #chat-bg {
             min-height: 100%;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay; background-color: #0b141a;
-            padding: 15px; display: flex; flex-direction: column; gap: 8px;
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; /* Stacks messages vertically */
+            gap: 8px;
         }
 
-        /* MESSAGES */
+        /* MESSAGE BUBBLES */
         .msg { 
             max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 16px; 
             color: white; line-height: 1.4; position: relative; word-wrap: break-word; 
@@ -80,14 +101,14 @@
         /* LEFT (THEM) */
         .msg.in { 
             background: #1f2c34; 
-            align-self: flex-start; 
+            align-self: flex-start; /* Forces to LEFT */
             border-top-left-radius: 0; 
         }
         
         /* RIGHT (YOU) */
         .msg.out { 
             background: #005c4b; 
-            align-self: flex-end; 
+            align-self: flex-end; /* Forces to RIGHT */
             border-top-right-radius: 0; 
         }
 
@@ -112,6 +133,8 @@
         .save-btn { background: #00a884; color: #111; font-weight: bold; border: none; padding: 14px; width: 100%; border-radius: 25px; font-size: 16px; margin-top: 10px; }
         
         #map-box { height: 180px; width: 100%; border-radius: 8px; margin: 10px 0; }
+        
+        /* AUTO ALERT STYLE */
         .auto-alert { width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2); border: 1px solid #00a884; border-radius: 10px; padding: 12px; text-align: center; }
         .mini-map { width: 100%; height: 100px; background: #333; margin-top: 5px; background-size: cover; background-position: center; border-radius: 5px; }
     </style>
@@ -168,7 +191,7 @@
     <div id="screen-chat" class="screen">
         <div class="header">
             <div style="display:flex; align-items:center; width:100%;">
-                <div onclick="closeChat()" style="padding: 10px 15px 10px 0; cursor: pointer; display: flex; align-items: center;">
+                <div class="back-btn-area" onclick="closeChat()">
                     <i class="fas fa-arrow-left" style="font-size:24px; color: white;"></i>
                 </div>
                 
@@ -197,7 +220,6 @@
 </div>
 
 <script>
-    // CONTACTS
     const DB = [
         {name:"Mom ❤️", color:"#e91e63", last:"Be safe."},
         {name:"Dad", color:"#3b82f6", last:"Okay."},
@@ -206,7 +228,7 @@
         {name:"Emergency", color:"#ef4444", last:"Active"}
     ];
 
-    // DEFAULT RULES (Pre-loaded so triggers work instantly)
+    // Default configuration (Allows triggers to work immediately)
     let config = { batt: { to:"Mom ❤️", msg:"Battery Low."}, loc: { to:"Dad", msg:"Reached safely."} };
     let activeContact = null;
     let map;
@@ -222,8 +244,7 @@
         DB.forEach(c => {
             const el = document.createElement('div');
             el.className = 'contact';
-            // OPEN CHAT IMMEDIATELY
-            el.onclick = () => openChat(c.name); 
+            el.onclick = () => openChat(c.name); // Opens instantly, no alert
             el.innerHTML = `
                 <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
                 <div style="flex:1">
@@ -241,7 +262,6 @@
         document.getElementById('loc-contact').innerHTML = opts;
     }
 
-    // NAVIGATION
     function nav(screen) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -256,12 +276,10 @@
         }
     }
 
-    // CHAT LOGIC
     function openChat(name) {
         activeContact = name;
         const c = DB.find(x => x.name === name);
         
-        // Hide Home, Show Chat
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-config').classList.remove('active');
         document.getElementById('screen-chat').classList.add('active');
@@ -270,7 +288,7 @@
         document.getElementById('chat-av').innerText = c.name[0];
         document.getElementById('chat-av').style.background = c.color;
         
-        // RESET MESSAGES
+        // Reset Chat with Receiver Message on LEFT
         document.getElementById('msg-list').innerHTML = `
             <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
             <div class="msg out">${c.last}</div>
@@ -278,7 +296,6 @@
     }
 
     function closeChat() {
-        // HIDE CHAT, SHOW HOME
         document.getElementById('screen-chat').classList.remove('active');
         document.getElementById('screen-home').classList.add('active');
     }
@@ -286,7 +303,7 @@
     function sendMsg() {
         const inp = document.getElementById('msg-input');
         if(!inp.value) return;
-        addMsg(inp.value, 'out'); // USER SENDER -> RIGHT
+        addMsg(inp.value, 'out'); // Sender on RIGHT
         inp.value = "";
     }
 
@@ -308,9 +325,9 @@
         nav('home');
     }
 
-    // --- TRIGGERS (WORK INSTANTLY) ---
+    // --- TRIGGERS (BOTTOM CORNERS) ---
     function triggerLocation() {
-        // Auto-open chat if needed
+        // Auto switch contact if needed
         if(activeContact !== config.loc.to) openChat(config.loc.to);
         
         addMsg(`
@@ -319,11 +336,11 @@
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.loc.msg}</div>
                 <div class="mini-map" style="background-image:url('https://a.basemaps.cartocdn.com/dark_all/13/5000/3000.png')"></div>
             </div>
-        `, 'out', true);
+        `, 'out', true); // Alerts align RIGHT
     }
 
     function triggerBattery() {
-        // Auto-open chat if needed
+        // Auto switch contact if needed
         if(activeContact !== config.batt.to) openChat(config.batt.to);
 
         addMsg(`
@@ -331,7 +348,7 @@
                 <b style="color:#ef4444">⚡ LOW BATTERY</b><br>
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.batt.msg}</div>
             </div>
-        `, 'out', true);
+        `, 'out', true); // Alerts align RIGHT
     }
 
     function initMap() {
