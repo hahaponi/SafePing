@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Fixed Alignment</title>
+    <title>SafePing Final Alignment</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -25,17 +25,6 @@
 
         #app { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; }
 
-        /* --- SCREENS --- */
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #0b141a; display: none; flex-direction: column;
-            z-index: 10;
-        }
-        .screen.active { display: flex; }
-
-        /* CHAT SCREEN (High Z-Index) */
-        #screen-chat { z-index: 100; background: #0b141a; }
-
         /* --- HEADER --- */
         .header {
             height: 60px; background: #1f2c34; display: flex; align-items: center;
@@ -44,20 +33,7 @@
         }
         .title { font-size: 20px; font-weight: 600; color: white; }
 
-        /* --- BACK BUTTON --- */
-        .back-click-area {
-            padding: 10px 20px 10px 0;
-            cursor: pointer;
-            display: flex; align-items: center;
-        }
-
-        /* --- TABS --- */
-        .tabs { height: 60px; background: #1f2c34; display: flex; border-top: 1px solid #333; flex-shrink: 0; }
-        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; }
-        .tab.active { color: #00a884; }
-        .tab i { font-size: 24px; margin-bottom: 4px; }
-
-        /* --- CONTENT SCROLL --- */
+        /* --- CONTENT --- */
         .content { flex: 1; overflow-y: auto; position: relative; }
 
         /* --- CONTACT LIST --- */
@@ -72,56 +48,61 @@
             font-size: 20px; font-weight: bold; color: white; flex-shrink: 0;
         }
 
-        /* --- SETTINGS --- */
-        .card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
-        .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
-        #map-box { height: 150px; width: 100%; border-radius: 8px; margin: 10px 0; }
+        /* --- CHAT AREA (THE FIX) --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b141a; display: none; flex-direction: column; z-index: 10;
+        }
+        .screen.active { display: flex; }
         
-        /* --- CHAT AREA (FIXED ALIGNMENT) --- */
+        /* CHAT BACKGROUND */
         #chat-bg {
             min-height: 100%;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay; background-color: #0b141a;
             padding: 15px; 
             display: flex; 
-            flex-direction: column; /* Stack vertically */
-            gap: 10px; 
+            flex-direction: column; 
             width: 100%;
         }
 
-        /* MESSAGE BUBBLES */
+        /* MESSAGE BUBBLES - STRICT WIDTH AND ALIGNMENT */
         .msg { 
-            max-width: 70%; /* REDUCED WIDTH TO SHOW SIDES CLEARLY */
+            max-width: 65%; /* VERY SMALL WIDTH TO FORCE SEPARATION */
             padding: 10px 14px; 
             border-radius: 8px; 
             font-size: 16px; 
-            color: white; 
             line-height: 1.4; 
             position: relative; 
             word-wrap: break-word; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
             display: block;
+            clear: both;
         }
         
-        /* RECEIVER (MOM/DAD) -> LEFT */
+        /* LEFT SIDE (THEM) - FORCED LEFT */
         .msg.in { 
             background: #1f2c34; 
-            align-self: flex-start; /* Flexbox Left */
-            margin-right: auto;     /* Force Left */
+            color: white;
+            align-self: flex-start; 
+            margin-right: auto; /* PUSHES IT TO THE LEFT */
+            margin-left: 0;
             border-top-left-radius: 0; 
             text-align: left;
         }
         
-        /* SENDER (YOU) -> RIGHT */
+        /* RIGHT SIDE (YOU) - FORCED RIGHT */
         .msg.out { 
             background: #005c4b; 
-            align-self: flex-end;   /* Flexbox Right */
-            margin-left: auto;      /* Force Right */
+            color: white;
+            align-self: flex-end; 
+            margin-left: auto; /* PUSHES IT TO THE RIGHT */
+            margin-right: 0;
             border-top-right-radius: 0; 
             text-align: left;
         }
 
-        /* CHAT INPUT */
+        /* --- FOOTER --- */
         .chat-footer {
             height: 65px; background: #1f2c34; display: flex; align-items: center;
             padding: 5px 10px; flex-shrink: 0;
@@ -136,18 +117,23 @@
             display: flex; align-items: center; justify-content: center; font-size: 18px; color: white;
         }
 
+        /* --- SETTINGS --- */
+        .card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
+        .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
+        #map-box { height: 180px; width: 100%; border-radius: 8px; margin: 10px 0; }
+        
         /* AUTO ALERT */
-        .auto-alert {
-            width: 85%; /* Slightly smaller width */
-            align-self: center; /* Centered */
-            margin: 0 auto;
-            background: rgba(0, 168, 132, 0.2);
-            border: 1px solid #00a884; 
-            border-radius: 10px; 
-            padding: 12px;
-            text-align: center;
-        }
+        .auto-alert { width: 100%; background: rgba(0, 168, 132, 0.2); border: 1px solid #00a884; border-radius: 10px; padding: 12px; text-align: center; }
         .mini-map { width: 100%; height: 100px; background: #333; margin-top: 5px; background-size: cover; background-position: center; border-radius: 5px; }
+
+        /* TABS */
+        .tabs { height: 60px; background: #1f2c34; display: flex; border-top: 1px solid #333; flex-shrink: 0; }
+        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; }
+        .tab.active { color: #00a884; }
+        .tab i { font-size: 24px; margin-bottom: 4px; }
+        
+        /* BACK BUTTON AREA */
+        .back-click-area { padding: 15px; cursor: pointer; display: flex; align-items: center; z-index: 1000; }
 
     </style>
 </head>
@@ -160,11 +146,9 @@
             <span class="title">SafePing</span>
             <i class="fas fa-search" style="color:#8696a0; font-size:20px;"></i>
         </div>
-        
         <div class="content">
             <div id="contact-list"></div>
         </div>
-
         <div class="tabs">
             <div class="tab active" onclick="nav('home')"><i class="fas fa-comment-alt"></i><span>Chats</span></div>
             <div class="tab" onclick="nav('config')"><i class="fas fa-cog"></i><span>Settings</span></div>
@@ -176,19 +160,19 @@
         <div class="content" style="padding:10px;">
             <div class="card">
                 <div style="color:#ef4444; font-weight:bold; margin-bottom:5px;">BATTERY PROTOCOL</div>
-                <div style="color:#8696a0; font-size:12px; margin-bottom:10px;">Move slider to test triggering</div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="color:#8696a0; font-size:12px;">Move slider to 10% to test</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
                     <input type="range" id="batt-slider" style="width:75%" min="1" max="100" value="85" oninput="updateBattery(this.value)">
                     <span id="b-val" style="color:#ef4444; font-weight:bold;">85%</span>
                 </div>
                 <select id="batt-contact" class="full-inp"></select>
-                <input type="text" id="batt-msg" class="full-inp" value="Battery Low. Call Landline.">
+                <input type="text" id="batt-msg" class="full-inp" value="Battery Low.">
             </div>
             
             <div class="card">
                 <div style="color:#00a884; font-weight:bold; margin-bottom:5px;">LOCATION PROTOCOL</div>
                 <div id="map-box"></div>
-                <button onclick="triggerLocation()" style="background:#2a3942; color:#00a884; border:1px solid #00a884; padding:8px; width:100%; border-radius:8px; margin-bottom:10px;">TEST LOCATION RULE</button>
+                <button onclick="triggerLocation()" style="background:#2a3942; color:#00a884; border:1px solid #00a884; padding:12px; width:100%; border-radius:8px; font-weight:bold;">TEST LOCATION ALERT</button>
                 <select id="loc-contact" class="full-inp"></select>
                 <input type="text" id="loc-msg" class="full-inp" value="Reached safely.">
             </div>
@@ -205,7 +189,6 @@
                 <div class="back-click-area" onclick="closeChat()">
                     <i class="fas fa-arrow-left" style="font-size:24px; color: white;"></i>
                 </div>
-                
                 <div class="avatar" id="chat-av" style="width:35px; height:35px; font-size:14px; margin-right:10px;"></div>
                 <div style="flex:1;">
                     <div id="chat-title" style="font-weight:bold; font-size:16px;">Name</div>
@@ -236,7 +219,7 @@
         {name:"Dad", color:"#3b82f6", last:"Okay."},
         {name:"Rahul", color:"#f59e0b", last:"Where r u?"},
         {name:"Priya", color:"#8b5cf6", last:"See you."},
-        {name:"Amit", color:"#10b981", last:"Notes?"}
+        {name:"Emergency", color:"#ef4444", last:"Active"}
     ];
 
     let map, marker, activeContact;
@@ -297,7 +280,7 @@
         document.getElementById('chat-av').innerText = c.name[0];
         document.getElementById('chat-av').style.background = c.color;
         
-        // Reset Chat: MOM on LEFT, YOU on RIGHT
+        // RESET MESSAGES WITH CORRECT SIDES
         document.getElementById('msg-list').innerHTML = `
             <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
             <div class="msg out">${c.last}</div>
@@ -328,8 +311,6 @@
     }
 
     // --- AUTOMATION SIMULATION ---
-    
-    // 1. BATTERY LOGIC
     function updateBattery(val) {
         document.getElementById('b-val').innerText = val + "%";
         if(val <= 10) {
@@ -351,7 +332,6 @@
         `, 'out', true); // ALIGN RIGHT
     }
 
-    // 2. LOCATION LOGIC
     function triggerLocation() {
         config.loc.to = document.getElementById('loc-contact').value;
         config.loc.msg = document.getElementById('loc-msg').value;
