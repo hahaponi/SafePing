@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Fixed</title>
+    <title>SafePing Final</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -25,19 +25,6 @@
 
         #app { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; }
 
-        /* --- INVISIBLE TRIGGERS (MOVED TO BOTTOM TO AVOID BACK BUTTON) --- */
-        /* Tap the very bottom left corner of the screen for Location */
-        .trigger-left { 
-            position: absolute; bottom: 0; left: 0; width: 60px; height: 60px; 
-            z-index: 99999; 
-            /* background: red; opacity: 0.1; Uncomment to see hit box for testing */
-        }
-        /* Tap the very bottom right corner of the screen for Battery */
-        .trigger-right { 
-            position: absolute; bottom: 0; right: 0; width: 60px; height: 60px; 
-            z-index: 99999; 
-        }
-
         /* --- SCREENS --- */
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -46,7 +33,7 @@
         }
         .screen.active { display: flex; }
 
-        /* CHAT SCREEN OVERLAY */
+        /* CHAT SCREEN (High Z-Index) */
         #screen-chat { z-index: 100; background: #0b141a; }
 
         /* --- HEADER --- */
@@ -57,17 +44,12 @@
         }
         .title { font-size: 20px; font-weight: 600; color: white; }
 
-        /* --- BACK BUTTON STYLE --- */
-        .back-btn-area {
-            padding: 10px 15px 10px 0;
+        /* --- BACK BUTTON (CRITICAL FIX) --- */
+        .back-click-area {
+            padding: 10px 20px 10px 0; /* Large click area */
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            z-index: 1000; /* Super high to ensure clickability */
+            display: flex; align-items: center;
         }
-
-        /* --- CONTENT --- */
-        .content { flex: 1; overflow-y: auto; position: relative; }
 
         /* --- TABS --- */
         .tabs { height: 60px; background: #1f2c34; display: flex; border-top: 1px solid #333; flex-shrink: 0; }
@@ -75,40 +57,55 @@
         .tab.active { color: #00a884; }
         .tab i { font-size: 24px; margin-bottom: 4px; }
 
-        /* --- CONTACT LIST --- */
-        .contact { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .contact:active { background: #202c33; }
-        .avatar { width: 50px; height: 50px; border-radius: 50%; background: #667781; margin-right: 15px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; color: white; }
+        /* --- CONTENT SCROLL --- */
+        .content { flex: 1; overflow-y: auto; position: relative; }
 
-        /* --- CHAT VIEW (FLEXBOX FIX FOR ALIGNMENT) --- */
+        /* --- CONTACT LIST --- */
+        .contact-item {
+            display: flex; align-items: center; padding: 15px;
+            border-bottom: 1px solid rgba(134,150,160,0.15); cursor: pointer;
+        }
+        .contact-item:active { background: #202c33; }
+        .avatar {
+            width: 50px; height: 50px; border-radius: 50%; background: #667781;
+            margin-right: 15px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; color: white; flex-shrink: 0;
+        }
+
+        /* --- SETTINGS --- */
+        .card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
+        .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
+        #map-box { height: 150px; width: 100%; border-radius: 8px; margin: 10px 0; }
+        
+        /* --- CHAT AREA (ALIGNMENT FIX) --- */
         #chat-bg {
             min-height: 100%;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay; background-color: #0b141a;
             padding: 15px; 
             display: flex; 
-            flex-direction: column; /* Stacks messages vertically */
-            gap: 8px;
+            flex-direction: column; /* Stack messages vertically */
+            gap: 8px; 
         }
 
         /* MESSAGE BUBBLES */
         .msg { 
             max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 16px; 
             color: white; line-height: 1.4; position: relative; word-wrap: break-word; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.3); margin-bottom: 5px;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
         
-        /* LEFT (THEM) */
+        /* RECEIVER (MOM/DAD) -> LEFT */
         .msg.in { 
             background: #1f2c34; 
-            align-self: flex-start; /* Forces to LEFT */
+            align-self: flex-start; /* CRITICAL ALIGNMENT FIX */
             border-top-left-radius: 0; 
         }
         
-        /* RIGHT (YOU) */
+        /* SENDER (YOU) -> RIGHT */
         .msg.out { 
             background: #005c4b; 
-            align-self: flex-end; /* Forces to RIGHT */
+            align-self: flex-end; /* CRITICAL ALIGNMENT FIX */
             border-top-right-radius: 0; 
         }
 
@@ -127,24 +124,19 @@
             display: flex; align-items: center; justify-content: center; font-size: 18px; color: white;
         }
 
-        /* --- SETTINGS --- */
-        .card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
-        .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
-        .save-btn { background: #00a884; color: #111; font-weight: bold; border: none; padding: 14px; width: 100%; border-radius: 25px; font-size: 16px; margin-top: 10px; }
-        
-        #map-box { height: 180px; width: 100%; border-radius: 8px; margin: 10px 0; }
-        
-        /* AUTO ALERT STYLE */
-        .auto-alert { width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2); border: 1px solid #00a884; border-radius: 10px; padding: 12px; text-align: center; }
+        /* AUTO ALERT */
+        .auto-alert {
+            width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2);
+            border: 1px solid #00a884; border-radius: 10px; padding: 12px;
+            text-align: center; margin: 10px 0;
+        }
         .mini-map { width: 100%; height: 100px; background: #333; margin-top: 5px; background-size: cover; background-position: center; border-radius: 5px; }
+
     </style>
 </head>
 <body>
 
 <div id="app">
-
-    <div class="trigger-left" onclick="triggerLocation()"></div>
-    <div class="trigger-right" onclick="triggerBattery()"></div>
 
     <div id="screen-home" class="screen active">
         <div class="header">
@@ -164,23 +156,25 @@
 
     <div id="screen-config" class="screen">
         <div class="header"><span class="title">Settings</span></div>
-        <div class="content">
+        <div class="content" style="padding:10px;">
             <div class="card">
                 <div style="color:#ef4444; font-weight:bold; margin-bottom:5px;">BATTERY PROTOCOL</div>
-                <input type="range" style="width:100%" min="1" max="20" value="10">
+                <div style="color:#8696a0; font-size:12px; margin-bottom:10px;">Move slider to test triggering</div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <input type="range" id="batt-slider" style="width:75%" min="1" max="100" value="85" oninput="updateBattery(this.value)">
+                    <span id="b-val" style="color:#ef4444; font-weight:bold;">85%</span>
+                </div>
                 <select id="batt-contact" class="full-inp"></select>
-                <input type="text" id="batt-msg" class="full-inp" value="Battery Low.">
+                <input type="text" id="batt-msg" class="full-inp" value="Battery Low. Call Landline.">
             </div>
+            
             <div class="card">
                 <div style="color:#00a884; font-weight:bold; margin-bottom:5px;">LOCATION PROTOCOL</div>
                 <div id="map-box"></div>
+                <button onclick="triggerLocation()" style="background:#2a3942; color:#00a884; border:1px solid #00a884; padding:8px; width:100%; border-radius:8px; margin-bottom:10px;">TEST LOCATION RULE</button>
                 <select id="loc-contact" class="full-inp"></select>
                 <input type="text" id="loc-msg" class="full-inp" value="Reached safely.">
             </div>
-            <div style="padding:0 15px;">
-                <button class="save-btn" onclick="saveRules()">SAVE RULES</button>
-            </div>
-            <div style="height:50px"></div>
         </div>
         <div class="tabs">
             <div class="tab" onclick="nav('home')"><i class="fas fa-comment-alt"></i><span>Chats</span></div>
@@ -191,7 +185,7 @@
     <div id="screen-chat" class="screen">
         <div class="header">
             <div style="display:flex; align-items:center; width:100%;">
-                <div class="back-btn-area" onclick="closeChat()">
+                <div class="back-click-area" onclick="closeChat()">
                     <i class="fas fa-arrow-left" style="font-size:24px; color: white;"></i>
                 </div>
                 
@@ -225,13 +219,11 @@
         {name:"Dad", color:"#3b82f6", last:"Okay."},
         {name:"Rahul", color:"#f59e0b", last:"Where r u?"},
         {name:"Priya", color:"#8b5cf6", last:"See you."},
-        {name:"Emergency", color:"#ef4444", last:"Active"}
+        {name:"Amit", color:"#10b981", last:"Notes?"}
     ];
 
-    // Default configuration (Allows triggers to work immediately)
+    let map, marker, activeContact;
     let config = { batt: { to:"Mom ❤️", msg:"Battery Low."}, loc: { to:"Dad", msg:"Reached safely."} };
-    let activeContact = null;
-    let map;
 
     window.onload = () => {
         renderContacts();
@@ -243,8 +235,8 @@
         list.innerHTML = "";
         DB.forEach(c => {
             const el = document.createElement('div');
-            el.className = 'contact';
-            el.onclick = () => openChat(c.name); // Opens instantly, no alert
+            el.className = 'contact-item';
+            el.onclick = () => openChat(c.name); 
             el.innerHTML = `
                 <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
                 <div style="flex:1">
@@ -280,6 +272,7 @@
         activeContact = name;
         const c = DB.find(x => x.name === name);
         
+        // SWITCH SCREENS
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-config').classList.remove('active');
         document.getElementById('screen-chat').classList.add('active');
@@ -298,6 +291,9 @@
     function closeChat() {
         document.getElementById('screen-chat').classList.remove('active');
         document.getElementById('screen-home').classList.add('active');
+        // Reset tabs visually
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab')[0].classList.add('active');
     }
 
     function sendMsg() {
@@ -312,22 +308,45 @@
         div.className = `msg ${type}`;
         if(isHTML) div.innerHTML = txt; else div.innerText = txt;
         document.getElementById('msg-list').appendChild(div);
+        
+        // Scroll
         const scroll = document.getElementById('chat-scroll');
         scroll.scrollTop = scroll.scrollHeight;
     }
 
-    function saveRules() {
-        config.batt.to = document.getElementById('batt-contact').value;
-        config.batt.msg = document.getElementById('batt-msg').value;
-        config.loc.to = document.getElementById('loc-contact').value;
-        config.loc.msg = document.getElementById('loc-msg').value;
-        alert("Rules Saved!");
-        nav('home');
+    // --- AUTOMATION SIMULATION ---
+    
+    // 1. BATTERY LOGIC (Use Slider in Settings to Sim)
+    function updateBattery(val) {
+        document.getElementById('b-val').innerText = val + "%";
+        if(val <= 10) {
+            triggerBattery();
+        }
     }
 
-    // --- TRIGGERS (BOTTOM CORNERS) ---
+    function triggerBattery() {
+        // Auto Update Config
+        config.batt.to = document.getElementById('batt-contact').value;
+        config.batt.msg = document.getElementById('batt-msg').value;
+
+        // Open Chat if not already open
+        if(activeContact !== config.batt.to) openChat(config.batt.to);
+
+        addMsg(`
+            <div class="auto-alert" style="border-color:#ef4444; background:rgba(239,68,68,0.2)">
+                <b style="color:#ef4444">⚡ LOW BATTERY</b><br>
+                <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.batt.msg}</div>
+            </div>
+        `, 'out', true); // ALIGN RIGHT
+    }
+
+    // 2. LOCATION LOGIC (Use Button in Settings to Sim)
     function triggerLocation() {
-        // Auto switch contact if needed
+        // Auto Update Config
+        config.loc.to = document.getElementById('loc-contact').value;
+        config.loc.msg = document.getElementById('loc-msg').value;
+
+        // Open Chat if not already open
         if(activeContact !== config.loc.to) openChat(config.loc.to);
         
         addMsg(`
@@ -336,19 +355,7 @@
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.loc.msg}</div>
                 <div class="mini-map" style="background-image:url('https://a.basemaps.cartocdn.com/dark_all/13/5000/3000.png')"></div>
             </div>
-        `, 'out', true); // Alerts align RIGHT
-    }
-
-    function triggerBattery() {
-        // Auto switch contact if needed
-        if(activeContact !== config.batt.to) openChat(config.batt.to);
-
-        addMsg(`
-            <div class="auto-alert" style="border-color:#ef4444; background:rgba(239,68,68,0.2)">
-                <b style="color:#ef4444">⚡ LOW BATTERY</b><br>
-                <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.batt.msg}</div>
-            </div>
-        `, 'out', true); // Alerts align RIGHT
+        `, 'out', true); // ALIGN RIGHT
     }
 
     function initMap() {
