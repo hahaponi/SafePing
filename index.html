@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Final</title>
+    <title>SafePing Fixed Alignment</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -44,9 +44,9 @@
         }
         .title { font-size: 20px; font-weight: 600; color: white; }
 
-        /* --- BACK BUTTON (CRITICAL FIX) --- */
+        /* --- BACK BUTTON --- */
         .back-click-area {
-            padding: 10px 20px 10px 0; /* Large click area */
+            padding: 10px 20px 10px 0;
             cursor: pointer;
             display: flex; align-items: center;
         }
@@ -77,36 +77,48 @@
         .full-inp { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin: 10px 0; font-size: 16px; }
         #map-box { height: 150px; width: 100%; border-radius: 8px; margin: 10px 0; }
         
-        /* --- CHAT AREA (ALIGNMENT FIX) --- */
+        /* --- CHAT AREA (FIXED ALIGNMENT) --- */
         #chat-bg {
             min-height: 100%;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay; background-color: #0b141a;
             padding: 15px; 
             display: flex; 
-            flex-direction: column; /* Stack messages vertically */
-            gap: 8px; 
+            flex-direction: column; /* Stack vertically */
+            gap: 10px; 
+            width: 100%;
         }
 
         /* MESSAGE BUBBLES */
         .msg { 
-            max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 16px; 
-            color: white; line-height: 1.4; position: relative; word-wrap: break-word; 
-            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+            max-width: 70%; /* REDUCED WIDTH TO SHOW SIDES CLEARLY */
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            color: white; 
+            line-height: 1.4; 
+            position: relative; 
+            word-wrap: break-word; 
+            box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            display: block;
         }
         
         /* RECEIVER (MOM/DAD) -> LEFT */
         .msg.in { 
             background: #1f2c34; 
-            align-self: flex-start; /* CRITICAL ALIGNMENT FIX */
+            align-self: flex-start; /* Flexbox Left */
+            margin-right: auto;     /* Force Left */
             border-top-left-radius: 0; 
+            text-align: left;
         }
         
         /* SENDER (YOU) -> RIGHT */
         .msg.out { 
             background: #005c4b; 
-            align-self: flex-end; /* CRITICAL ALIGNMENT FIX */
+            align-self: flex-end;   /* Flexbox Right */
+            margin-left: auto;      /* Force Right */
             border-top-right-radius: 0; 
+            text-align: left;
         }
 
         /* CHAT INPUT */
@@ -126,9 +138,14 @@
 
         /* AUTO ALERT */
         .auto-alert {
-            width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2);
-            border: 1px solid #00a884; border-radius: 10px; padding: 12px;
-            text-align: center; margin: 10px 0;
+            width: 85%; /* Slightly smaller width */
+            align-self: center; /* Centered */
+            margin: 0 auto;
+            background: rgba(0, 168, 132, 0.2);
+            border: 1px solid #00a884; 
+            border-radius: 10px; 
+            padding: 12px;
+            text-align: center;
         }
         .mini-map { width: 100%; height: 100px; background: #333; margin-top: 5px; background-size: cover; background-position: center; border-radius: 5px; }
 
@@ -272,7 +289,6 @@
         activeContact = name;
         const c = DB.find(x => x.name === name);
         
-        // SWITCH SCREENS
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-config').classList.remove('active');
         document.getElementById('screen-chat').classList.add('active');
@@ -281,7 +297,7 @@
         document.getElementById('chat-av').innerText = c.name[0];
         document.getElementById('chat-av').style.background = c.color;
         
-        // Reset Chat with Receiver Message on LEFT
+        // Reset Chat: MOM on LEFT, YOU on RIGHT
         document.getElementById('msg-list').innerHTML = `
             <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
             <div class="msg out">${c.last}</div>
@@ -291,7 +307,6 @@
     function closeChat() {
         document.getElementById('screen-chat').classList.remove('active');
         document.getElementById('screen-home').classList.add('active');
-        // Reset tabs visually
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab')[0].classList.add('active');
     }
@@ -299,7 +314,7 @@
     function sendMsg() {
         const inp = document.getElementById('msg-input');
         if(!inp.value) return;
-        addMsg(inp.value, 'out'); // Sender on RIGHT
+        addMsg(inp.value, 'out'); // USER SENDER -> RIGHT
         inp.value = "";
     }
 
@@ -308,15 +323,13 @@
         div.className = `msg ${type}`;
         if(isHTML) div.innerHTML = txt; else div.innerText = txt;
         document.getElementById('msg-list').appendChild(div);
-        
-        // Scroll
         const scroll = document.getElementById('chat-scroll');
         scroll.scrollTop = scroll.scrollHeight;
     }
 
     // --- AUTOMATION SIMULATION ---
     
-    // 1. BATTERY LOGIC (Use Slider in Settings to Sim)
+    // 1. BATTERY LOGIC
     function updateBattery(val) {
         document.getElementById('b-val').innerText = val + "%";
         if(val <= 10) {
@@ -325,11 +338,9 @@
     }
 
     function triggerBattery() {
-        // Auto Update Config
         config.batt.to = document.getElementById('batt-contact').value;
         config.batt.msg = document.getElementById('batt-msg').value;
 
-        // Open Chat if not already open
         if(activeContact !== config.batt.to) openChat(config.batt.to);
 
         addMsg(`
@@ -340,13 +351,11 @@
         `, 'out', true); // ALIGN RIGHT
     }
 
-    // 2. LOCATION LOGIC (Use Button in Settings to Sim)
+    // 2. LOCATION LOGIC
     function triggerLocation() {
-        // Auto Update Config
         config.loc.to = document.getElementById('loc-contact').value;
         config.loc.msg = document.getElementById('loc-msg').value;
 
-        // Open Chat if not already open
         if(activeContact !== config.loc.to) openChat(config.loc.to);
         
         addMsg(`
