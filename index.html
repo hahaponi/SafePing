@@ -3,56 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Final</title>
+    <title>SafePing Ultimate</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* --- RESET --- */
+        /* --- RESET & CORE LAYOUT --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
         body, html {
-            background-color: #0b141a; /* WhatsApp Dark BG */
+            background-color: #0b141a; /* Dark Background */
             height: 100%;
             width: 100%;
             margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #e9edef;
             overflow: hidden;
+            position: fixed; /* Locks screen to prevent scrolling issues */
         }
 
         #app {
             width: 100%;
             height: 100%;
-            display: flex;
-            flex-direction: column;
             position: relative;
+            overflow: hidden;
         }
 
-        /* --- INVISIBLE TRIGGER ZONES (THE MAGIC) --- */
-        /* These sit on top of the header so you can tap them to trigger events */
+        /* --- INVISIBLE TRIGGER ZONES --- */
         .trigger-zone-left {
             position: absolute; top: 0; left: 0; width: 60px; height: 60px;
-            z-index: 9999; cursor: pointer;
+            z-index: 99999; cursor: pointer;
         }
         .trigger-zone-right {
             position: absolute; top: 0; right: 0; width: 60px; height: 60px;
-            z-index: 9999; cursor: pointer;
+            z-index: 99999; cursor: pointer;
         }
 
         /* --- SCREENS --- */
+        /* All screens take up 100% of the view */
         .screen {
-            flex: 1;
-            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #0b141a;
+            display: none; /* Hidden by default */
             flex-direction: column;
-            width: 100%;
-            height: 100%;
+            z-index: 10;
         }
-        .screen.active { display: flex; }
+        .screen.active { display: flex; z-index: 20; }
 
-        /* --- HEADER --- */
+        /* SPECIAL Z-INDEX FOR CHAT TO COVER EVERYTHING */
+        #screen-chat { z-index: 50; }
+
+        /* --- HEADERS --- */
         .app-header {
             height: 60px;
             background: #1f2c34;
@@ -62,27 +66,24 @@
             padding: 0 15px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
             flex-shrink: 0;
-            z-index: 100;
         }
         .app-title { font-size: 22px; color: #fff; font-weight: 600; }
 
-        /* --- CONTENT SCROLL --- */
+        /* --- SCROLLABLE CONTENT --- */
         .content {
             flex: 1;
             overflow-y: auto;
-            background: #0b141a;
             position: relative;
+            background: #0b141a;
         }
 
-        /* --- TABS --- */
+        /* --- TAB BAR (HOME ONLY) --- */
         .tab-bar {
-            height: 65px;
+            height: 60px;
             background: #1f2c34;
             display: flex;
             border-top: 1px solid #333;
             flex-shrink: 0;
-            z-index: 100;
-            padding-bottom: 5px;
         }
         .tab { 
             flex: 1; display: flex; flex-direction: column;
@@ -93,11 +94,12 @@
         .tab i { font-size: 24px; margin-bottom: 4px; }
         .tab span { font-size: 12px; }
 
-        /* --- CONTACT LIST --- */
+        /* --- CONTACT LIST STYLES --- */
         .contact-item {
             display: flex; align-items: center; padding: 15px;
             border-bottom: 1px solid rgba(134,150,160,0.15);
             cursor: pointer;
+            background: #0b141a;
         }
         .contact-item:active { background: #202c33; }
         .avatar {
@@ -105,14 +107,49 @@
             margin-right: 15px; display: flex; align-items: center; justify-content: center;
             font-size: 20px; font-weight: bold; color: white; flex-shrink: 0;
         }
-        
-        /* --- SETTINGS --- */
+
+        /* --- CHAT SCREEN SPECIFICS --- */
+        #chat-bg {
+            min-height: 100%;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay; background-color: #0b141a;
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+
+        /* Message Bubbles */
+        .msg { 
+            max-width: 80%; padding: 8px 12px; border-radius: 8px; 
+            font-size: 16px; color: white; line-height: 1.4; position: relative;
+            word-wrap: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+        }
+        .msg.in { background: #1f2c34; align-self: flex-start; border-top-left-radius: 0; }
+        .msg.out { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
+
+        /* Chat Footer */
+        .chat-footer {
+            height: 65px; background: #1f2c34; display: flex; align-items: center;
+            padding: 5px 10px; flex-shrink: 0;
+        }
+        .chat-input-box {
+            flex: 1; background: #2a3942; border-radius: 25px; padding: 10px 20px;
+            display: flex; align-items: center; margin-right: 8px;
+        }
+        #msg-input { width: 100%; background: transparent; border: none; color: white; font-size: 16px; }
+        .send-circle {
+            width: 45px; height: 45px; background: #00a884; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; color: white;
+            flex-shrink: 0;
+        }
+
+        /* --- SETTINGS STYLES --- */
         .config-card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
         .label { color: #00a884; font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; }
         .full-input {
             width: 100%; background: #2a3942; border: 1px solid #374045;
-            color: white; padding: 12px; border-radius: 8px; margin-bottom: 12px;
-            font-size: 16px;
+            color: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 16px;
         }
         .btn-save {
             background: #00a884; color: #111; font-weight: bold; border: none;
@@ -121,55 +158,7 @@
         #map-wrapper { height: 200px; width: 100%; border-radius: 8px; margin-bottom: 10px; position: relative; }
         #map-obj { height: 100%; width: 100%; }
 
-        /* --- CHAT SCREEN --- */
-        #chat-bg {
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-blend-mode: overlay; background-color: #0b141a;
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; /* Space between messages */
-            min-height: 100%;
-        }
-        
-        .msg { 
-            max-width: 80%; 
-            padding: 8px 12px; 
-            border-radius: 8px; 
-            font-size: 16px; 
-            color: white; 
-            line-height: 1.4; 
-            position: relative;
-            word-wrap: break-word;
-        }
-
-        /* --- ALIGNMENT FIX --- */
-        .msg.in { 
-            background: #1f2c34; 
-            align-self: flex-start; /* LEFT */
-            border-top-left-radius: 0; 
-        }
-        .msg.out { 
-            background: #005c4b; 
-            align-self: flex-end; /* RIGHT */
-            border-top-right-radius: 0; 
-        }
-
-        .chat-footer {
-            height: 70px; background: #1f2c34; display: flex; align-items: center;
-            padding: 10px; flex-shrink: 0; z-index: 100;
-        }
-        .chat-input-box {
-            flex: 1; background: #2a3942; border-radius: 20px; padding: 10px 15px;
-            display: flex; align-items: center; margin-right: 10px;
-        }
-        #msg-input { width: 100%; background: transparent; border: none; color: white; font-size: 16px; }
-        .send-circle {
-            width: 48px; height: 48px; background: #00a884; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 20px; color: white;
-        }
-
-        /* Auto Alert Bubble */
+        /* Auto Alert */
         .auto-alert {
             width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2);
             border: 1px solid #00a884; border-radius: 10px; padding: 12px;
@@ -189,7 +178,7 @@
     <div id="screen-home" class="screen active">
         <div class="app-header">
             <span class="app-title">SafePing</span>
-            <div><i class="fas fa-search" style="color:#8696a0; font-size:20px;"></i></div>
+            <i class="fas fa-search" style="color:#8696a0; font-size:20px;"></i>
         </div>
 
         <div style="padding:10px; background:#0b141a;">
@@ -221,7 +210,7 @@
             <span class="app-title">Settings</span>
         </div>
 
-        <div class="content" style="padding: 10px;">
+        <div class="content">
             <div class="config-card">
                 <span class="label" style="color:#ef4444"><i class="fas fa-battery-quarter"></i> BATTERY PROTOCOL</span>
                 <div style="display:flex; justify-content:space-between; margin:10px 0; align-items:center;">
@@ -245,8 +234,10 @@
                 <input type="text" id="loc-msg" class="full-input" value="I have reached safely.">
             </div>
 
-            <button class="btn-save" onclick="saveRules()">SAVE RULES</button>
-            <div style="height:20px"></div>
+            <div style="padding: 0 15px;">
+                <button class="btn-save" onclick="saveRules()">SAVE RULES</button>
+            </div>
+            <div style="height:50px"></div>
         </div>
 
         <div class="tab-bar">
@@ -264,7 +255,7 @@
     <div id="screen-chat" class="screen">
         <div class="app-header">
             <div style="display:flex; align-items:center;">
-                <i class="fas fa-arrow-left" onclick="switchTab('home')" style="font-size:24px; margin-right:15px; cursor:pointer;"></i>
+                <i class="fas fa-arrow-left" onclick="closeChat()" style="font-size:24px; margin-right:15px; cursor:pointer;"></i>
                 <div class="avatar" id="chat-av" style="width:35px; height:35px; font-size:14px; margin-right:10px;"></div>
                 <div>
                     <div id="chat-title" style="font-weight:bold; font-size:16px;">Name</div>
@@ -337,8 +328,10 @@
         renderList(DB.filter(c => c.name.toLowerCase().includes(q)));
     }
 
+    // MAIN NAVIGATION (TABS)
     function switchTab(t) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-home').classList.remove('active');
+        document.getElementById('screen-config').classList.remove('active');
         document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
         
         if(t==='home') {
@@ -351,18 +344,30 @@
         }
     }
 
+    // CHAT NAVIGATION (FULL SCREEN OVERLAY)
     function openChat(name) {
         activeContact = name;
         const c = DB.find(x => x.name === name);
+        
+        // Hide Home, Show Chat
+        document.getElementById('screen-home').classList.remove('active');
+        document.getElementById('screen-config').classList.remove('active');
         document.getElementById('screen-chat').classList.add('active');
+
         document.getElementById('chat-title').innerText = c.name;
         document.getElementById('chat-av').innerText = c.name[0];
         document.getElementById('chat-av').style.background = c.color;
         
+        // Reset Chat with one history message
         document.getElementById('msg-list').innerHTML = `
             <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
             <div class="msg out">${c.last}</div>
         `;
+    }
+
+    function closeChat() {
+        document.getElementById('screen-chat').classList.remove('active');
+        document.getElementById('screen-home').classList.add('active');
     }
 
     function saveRules() {
@@ -391,10 +396,11 @@
         scroll.scrollTop = scroll.scrollHeight;
     }
 
-    // --- TRIGGERS (INVISIBLE) ---
-    // Top Left Tap
+    // --- TRIGGERS ---
     function triggerLocationEvent() {
         if(!rulesActive) return alert("Enable Rules in Settings first");
+        
+        // Auto-switch to correct person
         if(activeContact !== config.loc.to) openChat(config.loc.to);
         
         addMsg(`
@@ -406,9 +412,10 @@
         `, 'out', true);
     }
 
-    // Top Right Tap
     function triggerBatteryEvent() {
         if(!rulesActive) return alert("Enable Rules in Settings first");
+        
+        // Auto-switch to correct person
         if(activeContact !== config.batt.to) openChat(config.batt.to);
 
         addMsg(`
@@ -419,6 +426,7 @@
         `, 'out', true);
     }
 
+    // --- MAP ---
     function initMap() {
         if(map) { map.invalidateSize(); return; }
         map = L.map('map-obj').setView([20.59, 78.96], 5);
