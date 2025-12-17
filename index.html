@@ -3,103 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafePing Ultimate</title>
+    <title>SafePing Corrected</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* --- RESET & CORE LAYOUT --- */
+        /* --- RESET --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         
         body, html {
-            background-color: #0b141a; /* Dark Background */
-            height: 100%;
-            width: 100%;
+            background-color: #0b141a;
+            height: 100%; width: 100%;
             margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             color: #e9edef;
             overflow: hidden;
-            position: fixed; /* Locks screen to prevent scrolling issues */
         }
 
-        #app {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            overflow: hidden;
-        }
+        #app { width: 100%; height: 100%; position: relative; }
 
-        /* --- INVISIBLE TRIGGER ZONES --- */
-        .trigger-zone-left {
-            position: absolute; top: 0; left: 0; width: 60px; height: 60px;
-            z-index: 99999; cursor: pointer;
-        }
-        .trigger-zone-right {
-            position: absolute; top: 0; right: 0; width: 60px; height: 60px;
-            z-index: 99999; cursor: pointer;
-        }
+        /* --- INVISIBLE TRIGGER ZONES (Top Left/Right) --- */
+        .trigger-zone-left { position: absolute; top: 0; left: 0; width: 80px; height: 60px; z-index: 9999; cursor: pointer; }
+        .trigger-zone-right { position: absolute; top: 0; right: 0; width: 80px; height: 60px; z-index: 9999; cursor: pointer; }
 
         /* --- SCREENS --- */
-        /* All screens take up 100% of the view */
         .screen {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #0b141a;
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; background: #0b141a;
         }
-        .screen.active { display: flex; z-index: 20; }
+        .screen.active { display: flex; z-index: 10; }
 
-        /* SPECIAL Z-INDEX FOR CHAT TO COVER EVERYTHING */
+        /* CHAT SCREEN OVERLAY (Higher Z-Index) */
         #screen-chat { z-index: 50; }
 
-        /* --- HEADERS --- */
+        /* --- HEADER --- */
         .app-header {
-            height: 60px;
-            background: #1f2c34;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            height: 60px; background: #1f2c34; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
             flex-shrink: 0;
         }
-        .app-title { font-size: 22px; color: #fff; font-weight: 600; }
+        .app-title { font-size: 20px; color: #fff; font-weight: 600; }
 
-        /* --- SCROLLABLE CONTENT --- */
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            position: relative;
-            background: #0b141a;
-        }
-
-        /* --- TAB BAR (HOME ONLY) --- */
-        .tab-bar {
-            height: 60px;
-            background: #1f2c34;
-            display: flex;
-            border-top: 1px solid #333;
-            flex-shrink: 0;
-        }
-        .tab { 
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; 
-            color: #8696a0; cursor: pointer; 
-        }
-        .tab.active { color: #00a884; }
-        .tab i { font-size: 24px; margin-bottom: 4px; }
-        .tab span { font-size: 12px; }
-
-        /* --- CONTACT LIST STYLES --- */
+        /* --- CONTACT LIST --- */
+        .content { flex: 1; overflow-y: auto; position: relative; }
         .contact-item {
             display: flex; align-items: center; padding: 15px;
-            border-bottom: 1px solid rgba(134,150,160,0.15);
-            cursor: pointer;
-            background: #0b141a;
+            border-bottom: 1px solid rgba(134,150,160,0.15); cursor: pointer;
         }
         .contact-item:active { background: #202c33; }
         .avatar {
@@ -108,27 +59,45 @@
             font-size: 20px; font-weight: bold; color: white; flex-shrink: 0;
         }
 
-        /* --- CHAT SCREEN SPECIFICS --- */
+        /* --- TAB BAR --- */
+        .tab-bar {
+            height: 60px; background: #1f2c34; display: flex; border-top: 1px solid #333; flex-shrink: 0;
+        }
+        .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; }
+        .tab.active { color: #00a884; }
+        .tab i { font-size: 24px; margin-bottom: 4px; }
+        .tab span { font-size: 12px; }
+
+        /* --- CHAT AREA --- */
         #chat-bg {
             min-height: 100%;
             background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
             background-blend-mode: overlay; background-color: #0b141a;
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px;
+            padding: 15px; display: flex; flex-direction: column; gap: 8px;
         }
 
-        /* Message Bubbles */
+        /* MESSAGES - LEFT VS RIGHT */
         .msg { 
-            max-width: 80%; padding: 8px 12px; border-radius: 8px; 
-            font-size: 16px; color: white; line-height: 1.4; position: relative;
-            word-wrap: break-word; box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 16px; 
+            color: white; line-height: 1.4; position: relative; word-wrap: break-word; 
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
         }
-        .msg.in { background: #1f2c34; align-self: flex-start; border-top-left-radius: 0; }
-        .msg.out { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
+        
+        /* RECEIVER (THEM) -> LEFT */
+        .msg.in { 
+            background: #1f2c34; 
+            align-self: flex-start; 
+            border-top-left-radius: 0; 
+        }
+        
+        /* SENDER (YOU/AUTO) -> RIGHT */
+        .msg.out { 
+            background: #005c4b; 
+            align-self: flex-end; 
+            border-top-right-radius: 0; 
+        }
 
-        /* Chat Footer */
+        /* CHAT FOOTER */
         .chat-footer {
             height: 65px; background: #1f2c34; display: flex; align-items: center;
             padding: 5px 10px; flex-shrink: 0;
@@ -141,24 +110,16 @@
         .send-circle {
             width: 45px; height: 45px; background: #00a884; border-radius: 50%;
             display: flex; align-items: center; justify-content: center; font-size: 18px; color: white;
-            flex-shrink: 0;
         }
 
-        /* --- SETTINGS STYLES --- */
+        /* --- SETTINGS --- */
         .config-card { background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px; }
-        .label { color: #00a884; font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; }
-        .full-input {
-            width: 100%; background: #2a3942; border: 1px solid #374045;
-            color: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 16px;
-        }
-        .btn-save {
-            background: #00a884; color: #111; font-weight: bold; border: none;
-            padding: 14px; width: 100%; border-radius: 25px; font-size: 16px; margin: 15px 0;
-        }
+        .full-input { width: 100%; background: #2a3942; border: 1px solid #374045; color: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 16px; }
+        .btn-save { background: #00a884; color: #111; font-weight: bold; border: none; padding: 14px; width: 100%; border-radius: 25px; font-size: 16px; margin: 15px 0; }
         #map-wrapper { height: 200px; width: 100%; border-radius: 8px; margin-bottom: 10px; position: relative; }
         #map-obj { height: 100%; width: 100%; }
 
-        /* Auto Alert */
+        /* AUTO ALERT */
         .auto-alert {
             width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2);
             border: 1px solid #00a884; border-radius: 10px; padding: 12px;
@@ -180,39 +141,26 @@
             <span class="app-title">SafePing</span>
             <i class="fas fa-search" style="color:#8696a0; font-size:20px;"></i>
         </div>
-
-        <div style="padding:10px; background:#0b141a;">
-            <div style="background:#1f2c34; padding:8px; border-radius:8px; display:flex; align-items:center;">
-                <i class="fas fa-search" style="color:#8696a0; margin:0 10px;"></i>
-                <input type="text" id="contact-search" placeholder="Search..." oninput="filterContacts()" 
-                       style="background:transparent; border:none; color:white; width:100%; font-size:16px;">
-            </div>
-        </div>
-
+        
         <div class="content">
             <div id="contact-list"></div>
         </div>
 
         <div class="tab-bar">
             <div class="tab active" onclick="switchTab('home')">
-                <i class="fas fa-comment-alt"></i>
-                <span>Chats</span>
+                <i class="fas fa-comment-alt"></i><span>Chats</span>
             </div>
             <div class="tab" onclick="switchTab('config')">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
+                <i class="fas fa-cog"></i><span>Settings</span>
             </div>
         </div>
     </div>
 
     <div id="screen-config" class="screen">
-        <div class="app-header">
-            <span class="app-title">Settings</span>
-        </div>
-
-        <div class="content">
+        <div class="app-header"><span class="app-title">Settings</span></div>
+        <div class="content" style="padding:10px;">
             <div class="config-card">
-                <span class="label" style="color:#ef4444"><i class="fas fa-battery-quarter"></i> BATTERY PROTOCOL</span>
+                <span style="color:#ef4444; font-weight:bold; font-size:14px;"><i class="fas fa-battery-quarter"></i> BATTERY PROTOCOL</span>
                 <div style="display:flex; justify-content:space-between; margin:10px 0; align-items:center;">
                     <input type="range" min="1" max="20" value="10" style="width:70%" oninput="document.getElementById('b-val').innerText=this.value+'%'">
                     <span id="b-val" style="color:#ef4444; font-weight:bold;">10%</span>
@@ -220,9 +168,8 @@
                 <select id="batt-contact" class="full-input"></select>
                 <input type="text" id="batt-msg" class="full-input" value="Battery Low. Call Landline.">
             </div>
-
             <div class="config-card">
-                <span class="label"><i class="fas fa-map-marker-alt"></i> LOCATION PROTOCOL</span>
+                <span style="color:#00a884; font-weight:bold; font-size:14px;"><i class="fas fa-map-marker-alt"></i> LOCATION PROTOCOL</span>
                 <div id="map-wrapper">
                     <div style="position:absolute; top:10px; left:10px; right:10px; display:flex; gap:5px; z-index:500;">
                         <input type="text" id="loc-search" placeholder="City..." style="flex:1; padding:8px; border-radius:4px; border:none;">
@@ -233,36 +180,25 @@
                 <select id="loc-contact" class="full-input"></select>
                 <input type="text" id="loc-msg" class="full-input" value="I have reached safely.">
             </div>
-
-            <div style="padding: 0 15px;">
-                <button class="btn-save" onclick="saveRules()">SAVE RULES</button>
-            </div>
+            <button class="btn-save" onclick="saveRules()">SAVE RULES</button>
             <div style="height:50px"></div>
         </div>
-
         <div class="tab-bar">
-            <div class="tab" onclick="switchTab('home')">
-                <i class="fas fa-comment-alt"></i>
-                <span>Chats</span>
-            </div>
-            <div class="tab active" onclick="switchTab('config')">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </div>
+            <div class="tab" onclick="switchTab('home')"><i class="fas fa-comment-alt"></i><span>Chats</span></div>
+            <div class="tab active" onclick="switchTab('config')"><i class="fas fa-cog"></i><span>Settings</span></div>
         </div>
     </div>
 
     <div id="screen-chat" class="screen">
         <div class="app-header">
             <div style="display:flex; align-items:center;">
-                <i class="fas fa-arrow-left" onclick="closeChat()" style="font-size:24px; margin-right:15px; cursor:pointer;"></i>
+                <i class="fas fa-arrow-left" onclick="closeChat()" style="font-size:24px; margin-right:20px; cursor:pointer; padding: 5px;"></i>
                 <div class="avatar" id="chat-av" style="width:35px; height:35px; font-size:14px; margin-right:10px;"></div>
                 <div>
                     <div id="chat-title" style="font-weight:bold; font-size:16px;">Name</div>
                     <div style="font-size:12px; color:#8696a0">online</div>
                 </div>
             </div>
-            <i class="fas fa-phone" style="font-size:20px; color:#8696a0;"></i>
         </div>
 
         <div class="content" id="chat-scroll">
@@ -275,9 +211,7 @@
             <div class="chat-input-box">
                 <input type="text" id="msg-input" placeholder="Message" autocomplete="off">
             </div>
-            <div class="send-circle" onclick="sendMsg()">
-                <i class="fas fa-paper-plane"></i>
-            </div>
+            <div class="send-circle" onclick="sendMsg()"><i class="fas fa-paper-plane"></i></div>
         </div>
     </div>
 
@@ -290,8 +224,6 @@
         {name:"Rahul", color:"#f59e0b", last:"Where r u?"},
         {name:"Priya", color:"#8b5cf6", last:"See you."},
         {name:"Amit", color:"#10b981", last:"Notes?"},
-        {name:"Suresh", color:"#6366f1", last:"Hello."},
-        {name:"Anjali", color:"#ec4899", last:"Done."},
         {name:"Emergency", color:"#ef4444", last:"Active"}
     ];
 
@@ -311,7 +243,7 @@
         list.forEach(c => {
             const el = document.createElement('div');
             el.className = 'contact-item';
-            el.onclick = () => openChat(c.name);
+            el.onclick = () => openChat(c.name); // Chat opens anytime
             el.innerHTML = `
                 <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
                 <div style="flex:1">
@@ -323,12 +255,7 @@
         });
     }
 
-    function filterContacts() {
-        const q = document.getElementById('contact-search').value.toLowerCase();
-        renderList(DB.filter(c => c.name.toLowerCase().includes(q)));
-    }
-
-    // MAIN NAVIGATION (TABS)
+    // --- NAVIGATION ---
     function switchTab(t) {
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-config').classList.remove('active');
@@ -344,12 +271,12 @@
         }
     }
 
-    // CHAT NAVIGATION (FULL SCREEN OVERLAY)
+    // --- CHAT LOGIC ---
     function openChat(name) {
         activeContact = name;
         const c = DB.find(x => x.name === name);
         
-        // Hide Home, Show Chat
+        // Hide others, Show Chat
         document.getElementById('screen-home').classList.remove('active');
         document.getElementById('screen-config').classList.remove('active');
         document.getElementById('screen-chat').classList.add('active');
@@ -358,7 +285,7 @@
         document.getElementById('chat-av').innerText = c.name[0];
         document.getElementById('chat-av').style.background = c.color;
         
-        // Reset Chat with one history message
+        // Reset Chat
         document.getElementById('msg-list').innerHTML = `
             <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
             <div class="msg out">${c.last}</div>
@@ -366,10 +293,15 @@
     }
 
     function closeChat() {
+        // Go back to Home
         document.getElementById('screen-chat').classList.remove('active');
         document.getElementById('screen-home').classList.add('active');
+        // Ensure Tabs are correct
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab')[0].classList.add('active');
     }
 
+    // --- RULES ---
     function saveRules() {
         config.batt.to = document.getElementById('batt-contact').value;
         config.batt.msg = document.getElementById('batt-msg').value;
@@ -380,6 +312,7 @@
         switchTab('home');
     }
 
+    // --- MESSAGING ---
     function sendMsg() {
         const inp = document.getElementById('msg-input');
         if(!inp.value) return;
@@ -392,15 +325,15 @@
         div.className = `msg ${type}`;
         if(isHTML) div.innerHTML = txt; else div.innerText = txt;
         document.getElementById('msg-list').appendChild(div);
+        
+        // Auto-Scroll
         const scroll = document.getElementById('chat-scroll');
         scroll.scrollTop = scroll.scrollHeight;
     }
 
     // --- TRIGGERS ---
     function triggerLocationEvent() {
-        if(!rulesActive) return alert("Enable Rules in Settings first");
-        
-        // Auto-switch to correct person
+        if(!rulesActive) return alert("Please Save Rules in Settings first.");
         if(activeContact !== config.loc.to) openChat(config.loc.to);
         
         addMsg(`
@@ -409,13 +342,11 @@
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.loc.msg}</div>
                 <div class="mini-map" style="background-image:url('https://a.basemaps.cartocdn.com/dark_all/13/5000/3000.png')"></div>
             </div>
-        `, 'out', true);
+        `, 'out', true); // 'out' puts it on the RIGHT (Green)
     }
 
     function triggerBatteryEvent() {
-        if(!rulesActive) return alert("Enable Rules in Settings first");
-        
-        // Auto-switch to correct person
+        if(!rulesActive) return alert("Please Save Rules in Settings first.");
         if(activeContact !== config.batt.to) openChat(config.batt.to);
 
         addMsg(`
@@ -423,7 +354,7 @@
                 <b style="color:#ef4444">⚡ LOW BATTERY</b><br>
                 <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.batt.msg}</div>
             </div>
-        `, 'out', true);
+        `, 'out', true); // 'out' puts it on the RIGHT (Green)
     }
 
     // --- MAP ---
