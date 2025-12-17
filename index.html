@@ -2,454 +2,448 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafePing 8.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SafePing Native</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* --- 1. THEME --- */
-        :root {
-            --bg-app: #0b141a;
-            --bg-header: #202c33;
-            --bg-footer: #202c33;
-            --incoming: #202c33;
-            --outgoing: #005c4b;
-            --accent: #00a884;
-            --danger: #ef4444;
-            --text-main: #e9edef;
-            --text-sub: #8696a0;
-            --input-bg: #2a3942;
+        /* --- RESET --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body, html {
+            background-color: #0b141a; /* WhatsApp Dark BG */
+            height: 100%;
+            width: 100%;
+            margin: 0; padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #e9edef;
+            overflow: hidden; /* Prevent elastic scrolling */
         }
 
-        body {
-            background-color: #000;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; margin: 0;
-            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
-            color: var(--text-main); overflow: hidden; user-select: none;
+        /* --- LAYOUT CONTAINER --- */
+        #app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
-        /* --- 2. PHONE FRAME --- */
-        .phone-frame {
-            width: 380px; height: 800px;
-            background: var(--bg-app); border: 12px solid #111;
-            border-radius: 50px; position: relative; overflow: hidden;
-            box-shadow: 0 0 50px rgba(0, 168, 132, 0.1);
+        /* --- INVISIBLE TRIGGER BAR (TOP 30px) --- */
+        /* This replaces the system status bar for triggers */
+        .trigger-bar {
+            height: 30px;
+            background: #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+            flex-shrink: 0;
+            z-index: 9999;
         }
-        .notch {
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            width: 120px; height: 35px; background: #000; border-radius: 20px; z-index: 9999;
-        }
+        .trigger-zone { padding: 5px; cursor: pointer; }
+        .trigger-zone:active { opacity: 0.5; color: #00a884; }
 
-        /* --- 3. STATUS BAR (INVISIBLE TRIGGERS) --- */
-        .status-bar {
-            position: absolute; top: 15px; left: 0; width: 100%;
-            padding: 0 25px; box-sizing: border-box;
-            display: flex; justify-content: space-between; align-items: center;
-            z-index: 9998; font-size: 0.9rem; font-weight: bold;
-            color: white; pointer-events: none;
-        }
-        .trigger-zone-left { pointer-events: auto; cursor: pointer; padding: 5px; }
-        .trigger-zone-right { pointer-events: auto; cursor: pointer; display: flex; gap: 5px; padding: 5px; }
-
-        /* --- 4. SCREENS --- */
+        /* --- SCREENS --- */
         .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-app); display: none; flex-direction: column;
-            padding-top: 50px; box-sizing: border-box;
+            flex: 1;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            position: relative;
         }
-        .screen.active { display: flex; animation: fadeIn 0.2s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .screen.active { display: flex; }
 
-        /* --- 5. UI COMPONENTS --- */
-        .header {
-            background: var(--bg-header); padding: 15px; height: 60px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.2); z-index: 10;
+        /* --- HEADER --- */
+        .app-header {
+            height: 60px;
+            background: #1f2c34;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+            z-index: 100;
         }
-        .btn { background: var(--accent); color: #111; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .app-header h3 { margin: 0; font-size: 20px; color: #8696a0; }
+        .app-title { font-size: 22px; color: #fff; font-weight: 600; }
 
-        /* CONTACTS */
-        .contact-list { overflow-y: auto; flex: 1; padding-bottom: 60px; }
+        /* --- SCROLLABLE CONTENT AREA --- */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            background: #0b141a;
+            position: relative;
+        }
+
+        /* --- BOTTOM TAB BAR (NAV) --- */
+        .tab-bar {
+            height: 65px;
+            background: #1f2c34;
+            display: flex;
+            border-top: 1px solid #333;
+            flex-shrink: 0;
+            z-index: 100;
+            padding-bottom: 5px;
+        }
+        .tab { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            color: #8696a0; 
+            cursor: pointer; 
+        }
+        .tab i { font-size: 24px; margin-bottom: 4px; }
+        .tab span { font-size: 12px; }
+        
+        .tab.active { color: #00a884; }
+        .tab.active i { color: #00a884; }
+
+        /* --- CONTACT LIST --- */
         .contact-item {
             display: flex; align-items: center; padding: 15px;
-            border-bottom: 1px solid rgba(134, 150, 160, 0.15); cursor: pointer;
+            border-bottom: 1px solid rgba(134,150,160,0.15);
+            cursor: pointer;
         }
-        .contact-item:hover { background: rgba(255,255,255,0.05); }
+        .contact-item:active { background: #202c33; }
         .avatar {
-            width: 50px; height: 50px; border-radius: 50%; background: #555;
+            width: 50px; height: 50px; border-radius: 50%; background: #667781;
             margin-right: 15px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; font-weight: bold; color: white; flex-shrink: 0;
+            font-size: 20px; font-weight: bold; color: white; flex-shrink: 0;
         }
         
-        /* SETTINGS (Redesigned) */
-        .settings-container { padding: 15px; overflow-y: auto; padding-bottom: 80px; }
-        .setting-card {
-            background: var(--bg-header); padding: 15px; border-radius: 15px;
-            margin-bottom: 20px; border: 1px solid rgba(134, 150, 160, 0.1);
+        /* --- SETTINGS --- */
+        .config-card {
+            background: #1f2c34; margin: 15px; padding: 15px; border-radius: 12px;
         }
-        .card-title { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-weight: bold; font-size: 1.1rem; }
-        
-        label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; margin-top: 10px; }
-        .custom-input, .custom-select {
-            width: 100%; background: var(--input-bg); border: 1px solid rgba(255,255,255,0.1);
-            color: white; padding: 10px; border-radius: 8px; box-sizing: border-box; outline: none;
+        .label { color: #00a884; font-size: 14px; font-weight: bold; margin-bottom: 10px; display: block; }
+        .full-input {
+            width: 100%; background: #2a3942; border: 1px solid #374045;
+            color: white; padding: 12px; border-radius: 8px; margin-bottom: 12px;
+            font-size: 16px;
         }
-        
-        /* MAP */
-        #map-wrapper { position: relative; height: 180px; width: 100%; border-radius: 12px; overflow: hidden; margin-top: 5px; }
-        #map-obj { height: 100%; width: 100%; z-index: 1; }
-        .map-search-bar {
+        .btn-save {
+            background: #00a884; color: #111; font-weight: bold; border: none;
+            padding: 14px; width: 100%; border-radius: 25px; font-size: 16px; margin: 15px 0;
+        }
+
+        /* --- MAP --- */
+        #map-wrapper { height: 200px; width: 100%; border-radius: 8px; margin-bottom: 10px; position: relative; }
+        #map-obj { height: 100%; width: 100%; }
+        .map-search {
             position: absolute; top: 10px; left: 10px; right: 10px;
-            background: rgba(31, 44, 52, 0.95); border-radius: 8px; padding: 5px;
             display: flex; gap: 5px; z-index: 500;
         }
-
-        /* CHAT AREA */
-        .chat-body {
-            flex: 1; 
-            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-            background-color: #0b141a; background-blend-mode: overlay;
-            padding: 15px; overflow-y: auto; display: flex; flex-direction: column;
-            padding-bottom: 80px; 
-        }
-        .msg {
-            max-width: 80%; padding: 8px 12px; margin-bottom: 8px; border-radius: 8px;
-            font-size: 0.95rem; line-height: 1.4; position: relative; color: white;
-            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13);
-        }
-        .msg.in { background: var(--incoming); align-self: flex-start; border-top-left-radius: 0; }
-        .msg.out { background: var(--outgoing); align-self: flex-end; border-top-right-radius: 0; }
         
-        /* CHAT INPUT BAR */
+        /* --- CHAT SCREEN --- */
+        #chat-bg {
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            background-blend-mode: overlay; background-color: #0b141a;
+            padding: 15px; display: flex; flex-direction: column; gap: 8px;
+            min-height: 100%;
+        }
+        
         .chat-footer {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 70px;
-            background: var(--bg-footer); display: flex; align-items: center;
-            padding: 0 10px; box-sizing: border-box; z-index: 100;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            height: 70px; background: #1f2c34; display: flex; align-items: center;
+            padding: 10px; flex-shrink: 0; z-index: 100;
         }
-        .chat-input-wrapper { flex: 1; background: #2a3942; border-radius: 25px; padding: 10px 15px; margin-right: 10px; }
-        #final-chat-input { width: 100%; background: transparent; border: none; color: white; font-size: 1rem; outline: none; }
-        .send-btn-circle {
-            width: 45px; height: 45px; background: var(--accent); border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; color: #111;
-            font-size: 1.2rem; cursor: pointer;
+        .chat-input-box {
+            flex: 1; background: #2a3942; border-radius: 20px; padding: 10px 15px;
+            display: flex; align-items: center; margin-right: 10px;
+        }
+        #msg-input { width: 100%; background: transparent; border: none; color: white; font-size: 16px; }
+        .send-circle {
+            width: 48px; height: 48px; background: #00a884; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 20px; color: white;
         }
 
-        /* AUTO ALERT */
+        .msg { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 16px; color: white; line-height: 1.4; position: relative; }
+        .msg.in { background: #1f2c34; align-self: flex-start; border-top-left-radius: 0; }
+        .msg.out { background: #005c4b; align-self: flex-end; border-top-right-radius: 0; }
+
         .auto-alert {
-            width: 90%; align-self: center; background: rgba(0, 168, 132, 0.15);
-            border: 1px solid var(--accent); border-radius: 12px; padding: 12px; margin: 15px 0;
-            text-align: center; animation: slideUp 0.3s;
+            width: 90%; align-self: center; background: rgba(0, 168, 132, 0.2);
+            border: 1px solid #00a884; border-radius: 10px; padding: 12px;
+            text-align: center; margin: 10px 0;
         }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .mini-map-img { width: 100%; height: 100px; background: #333; border-radius: 6px; margin-top: 8px; background-size: cover; background-position: center; }
-
-        /* TABS */
-        .tab-bar {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
-            background: var(--bg-header); display: flex; border-top: 1px solid #333; z-index: 50;
-        }
-        .tab { flex: 1; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-sub); cursor: pointer; }
-        .tab.active { color: var(--accent); border-top: 3px solid var(--accent); }
+        .mini-map { width: 100%; height: 100px; background: #333; margin-top: 5px; background-size: cover; background-position: center; border-radius: 5px; }
 
     </style>
 </head>
 <body>
 
-    <div class="phone-frame">
-        
-        <div class="status-bar">
-            <div class="trigger-zone-left" onclick="triggerLocationEvent()">9:41</div>
-            <div class="notch"></div>
-            <div class="trigger-zone-right" onclick="triggerBatteryEvent()">
-                <i class="fas fa-signal"></i><i class="fas fa-wifi"></i><i class="fas fa-battery-half" id="status-battery-icon"></i>
-            </div>
+<div id="app">
+
+    <div class="trigger-bar">
+        <div class="trigger-zone" onclick="triggerLocationEvent()">9:41</div>
+        <div class="trigger-zone" onclick="triggerBatteryEvent()">
+            <i class="fas fa-signal"></i> 
+            <i class="fas fa-wifi" style="margin-left:5px"></i> 
+            <i class="fas fa-battery-half" id="batt-icon" style="margin-left:5px"></i>
         </div>
-
-        <div id="screen-home" class="screen active">
-            <div class="header">
-                <h3 style="margin:0">SafePing</h3>
-                <div style="font-size:0.8rem; color:var(--text-sub)">Connected</div>
-            </div>
-            <div class="contact-list" id="contact-list"></div>
-            <div class="tab-bar">
-                <div class="tab active" onclick="switchTab('home')"><i class="fas fa-comment-alt"></i></div>
-                <div class="tab" onclick="switchTab('config')"><i class="fas fa-cog"></i></div>
-            </div>
-        </div>
-
-        <div id="screen-config" class="screen">
-            <div class="header"><h3>Automation Rules</h3></div>
-            <div class="settings-container">
-                
-                <div class="setting-card">
-                    <div class="card-title"><i class="fas fa-battery-quarter" style="color:var(--danger)"></i> Battery Protocol</div>
-                    
-                    <label>IF Battery is below:</label>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <input type="range" min="1" max="20" value="10" style="width:70%" oninput="document.getElementById('batt-val').innerText = this.value + '%'">
-                        <span id="batt-val" style="color:var(--danger); font-weight:bold;">10%</span>
-                    </div>
-
-                    <label>SEND TO (Person):</label>
-                    <select id="batt-contact-select" class="custom-select">
-                        </select>
-
-                    <label>CUSTOM MESSAGE (Type here):</label>
-                    <input type="text" id="batt-msg-input" class="custom-input" value="Phone dying. Call my landline.">
-                </div>
-
-                <div class="setting-card">
-                    <div class="card-title"><i class="fas fa-map-marker-alt" style="color:var(--accent)"></i> Location Protocol</div>
-                    
-                    <label>IF Reaching Location:</label>
-                    <div id="map-wrapper">
-                        <div class="map-search-bar">
-                            <input type="text" id="loc-search" class="custom-input" style="border:none; background:transparent;" placeholder="Search Place...">
-                            <button class="btn" style="padding:5px 10px;" onclick="searchLocation()">Go</button>
-                        </div>
-                        <div id="map-obj"></div>
-                    </div>
-                    
-                    <label>SEND TO (Person):</label>
-                    <select id="loc-contact-select" class="custom-select">
-                        </select>
-
-                    <label>CUSTOM MESSAGE (Type here):</label>
-                    <input type="text" id="loc-msg-input" class="custom-input" value="I have reached the location safely.">
-                </div>
-
-                <button class="btn" style="width:100%" onclick="saveRules()">✅ Save All Rules</button>
-            </div>
-            
-            <div class="tab-bar">
-                <div class="tab" onclick="switchTab('home')"><i class="fas fa-comment-alt"></i></div>
-                <div class="tab active" onclick="switchTab('config')"><i class="fas fa-cog"></i></div>
-            </div>
-        </div>
-
-        <div id="screen-chat" class="screen" style="padding-bottom: 0;">
-            <div class="header">
-                <div style="display:flex; align-items:center;">
-                    <i class="fas fa-arrow-left" style="margin-right:15px; cursor:pointer;" onclick="switchTab('home')"></i>
-                    <div class="avatar" id="chat-avatar" style="width:35px; height:35px; font-size:0.9rem; margin-right:10px;"></div>
-                    <div>
-                        <h4 id="chat-name" style="margin:0; font-size:1rem;">Contact</h4>
-                        <span style="font-size:0.7rem; color:var(--text-sub)">Online</span>
-                    </div>
-                </div>
-                <div><i class="fas fa-phone" style="color:var(--text-sub)"></i></div>
-            </div>
-
-            <div class="chat-body" id="msg-container"></div>
-
-            <div class="chat-footer">
-                <div class="chat-input-wrapper">
-                    <input type="text" id="final-chat-input" placeholder="Message" autocomplete="off">
-                </div>
-                <div class="send-btn-circle" onclick="sendManualMsg()"><i class="fas fa-paper-plane"></i></div>
-            </div>
-        </div>
-
     </div>
 
-    <script>
-        // --- DATA ---
-        const contactsDB = [
-            { name: "Mom ❤️", color: "#e91e63", last: "Be safe." },
-            { name: "Dad", color: "#3b82f6", last: "Call me." },
-            { name: "Rahul (Bro)", color: "#f59e0b", last: "Keys are under mat." },
-            { name: "Priya", color: "#8b5cf6", last: "See you." },
-            { name: "Amit", color: "#10b981", last: "Notes shared." }
-        ];
+    <div id="screen-home" class="screen active">
+        <div class="app-header">
+            <span class="app-title">SafePing</span>
+            <div><i class="fas fa-search" style="color:#8696a0; font-size:20px;"></i></div>
+        </div>
 
-        let map, marker;
-        let activeContactName = null;
-        let rulesEnabled = false;
-        
-        // Storing Config
-        let config = {
-            batt: { contact: "Mom ❤️", msg: "Phone dying." },
-            loc: { contact: "Dad", msg: "Reached safely." }
-        };
+        <div style="padding:10px; background:#0b141a;">
+            <div style="background:#1f2c34; padding:8px; border-radius:8px; display:flex; align-items:center;">
+                <i class="fas fa-search" style="color:#8696a0; margin:0 10px;"></i>
+                <input type="text" id="contact-search" placeholder="Search..." oninput="filterContacts()" 
+                       style="background:transparent; border:none; color:white; width:100%; font-size:16px;">
+            </div>
+        </div>
 
-        window.onload = function() {
-            renderContacts();
-            populateDropdowns();
-        };
+        <div class="content">
+            <div id="contact-list"></div>
+        </div>
 
-        // Fill dropdowns in Config Screen
-        function populateDropdowns() {
-            const opts = contactsDB.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-            document.getElementById('batt-contact-select').innerHTML = opts;
-            document.getElementById('loc-contact-select').innerHTML = opts;
+        <div class="tab-bar">
+            <div class="tab active" onclick="switchTab('home')">
+                <i class="fas fa-comment-alt"></i>
+                <span>Chats</span>
+            </div>
+            <div class="tab" onclick="switchTab('config')">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-config" class="screen">
+        <div class="app-header">
+            <h3>Automation Rules</h3>
+        </div>
+
+        <div class="content" style="padding: 10px;">
             
-            // Set defaults
-            document.getElementById('batt-contact-select').value = "Mom ❤️";
-            document.getElementById('loc-contact-select').value = "Dad";
-        }
+            <div class="config-card">
+                <span class="label" style="color:#ef4444"><i class="fas fa-battery-quarter"></i> BATTERY PROTOCOL</span>
+                <div style="display:flex; justify-content:space-between; margin:10px 0; align-items:center;">
+                    <input type="range" min="1" max="20" value="10" style="width:70%" oninput="document.getElementById('b-val').innerText=this.value+'%'">
+                    <span id="b-val" style="color:#ef4444; font-weight:bold;">10%</span>
+                </div>
+                <select id="batt-contact" class="full-input"></select>
+                <input type="text" id="batt-msg" class="full-input" value="Battery Low. Call Landline.">
+            </div>
 
-        function renderContacts() {
-            const list = document.getElementById('contact-list');
-            list.innerHTML = "";
-            contactsDB.forEach(c => {
-                const item = document.createElement('div');
-                item.className = 'contact-item';
-                item.onclick = () => openChat(c.name);
-                item.innerHTML = `
-                    <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
-                    <div style="flex:1">
-                        <h4 style="margin:0; font-size:1rem;">${c.name}</h4>
-                        <p style="margin:2px 0 0; font-size:0.85rem; color:var(--text-sub)">${c.last}</p>
+            <div class="config-card">
+                <span class="label"><i class="fas fa-map-marker-alt"></i> LOCATION PROTOCOL</span>
+                <div id="map-wrapper">
+                    <div class="map-search">
+                        <input type="text" id="loc-search" placeholder="City..." style="flex:1; padding:8px; border-radius:4px; border:none;">
+                        <button onclick="searchLoc()" style="background:#00a884; border:none; color:white; padding:0 10px; border-radius:4px;">Go</button>
                     </div>
-                `;
-                list.appendChild(item);
-            });
-        }
+                    <div id="map-obj"></div>
+                </div>
+                <select id="loc-contact" class="full-input"></select>
+                <input type="text" id="loc-msg" class="full-input" value="I have reached safely.">
+            </div>
 
-        function switchTab(tab) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            
-            if(tab === 'home') {
-                document.getElementById('screen-home').classList.add('active');
-                document.querySelectorAll('.tab')[0].classList.add('active');
-            } else if (tab === 'config') {
-                document.getElementById('screen-config').classList.add('active');
-                document.querySelectorAll('.tab')[1].classList.add('active');
-                setTimeout(initMap, 300);
-            }
-        }
+            <button class="btn-save" onclick="saveRules()">SAVE RULES</button>
+            <div style="height:20px"></div>
+        </div>
 
-        function openChat(name) {
-            const contact = contactsDB.find(c => c.name === name);
-            activeContactName = name;
-            
-            document.getElementById('screen-chat').classList.add('active');
-            document.getElementById('chat-name').innerText = contact.name;
-            document.getElementById('chat-avatar').innerText = contact.name[0];
-            document.getElementById('chat-avatar').style.background = contact.color;
-            
-            // Initial Mock Chat
-            document.getElementById('msg-container').innerHTML = `
-                <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
-                <div class="msg out">${contact.last}</div>
+        <div class="tab-bar">
+            <div class="tab" onclick="switchTab('home')">
+                <i class="fas fa-comment-alt"></i>
+                <span>Chats</span>
+            </div>
+            <div class="tab active" onclick="switchTab('config')">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-chat" class="screen">
+        <div class="app-header">
+            <div style="display:flex; align-items:center;">
+                <i class="fas fa-arrow-left" onclick="switchTab('home')" style="font-size:24px; margin-right:15px; cursor:pointer;"></i>
+                <div class="avatar" id="chat-av" style="width:35px; height:35px; font-size:14px; margin-right:10px;"></div>
+                <div>
+                    <div id="chat-title" style="font-weight:bold; font-size:16px;">Name</div>
+                    <div style="font-size:12px; color:#8696a0">online</div>
+                </div>
+            </div>
+            <i class="fas fa-phone" style="font-size:20px; color:#8696a0;"></i>
+        </div>
+
+        <div class="content" id="chat-scroll">
+            <div id="chat-bg">
+                <div id="msg-list"></div>
+            </div>
+        </div>
+
+        <div class="chat-footer">
+            <div class="chat-input-box">
+                <input type="text" id="msg-input" placeholder="Message" autocomplete="off">
+            </div>
+            <div class="send-circle" onclick="sendMsg()">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- DATA ---
+    const DB = [
+        {name:"Mom ❤️", color:"#e91e63", last:"Be safe."},
+        {name:"Dad", color:"#3b82f6", last:"Okay."},
+        {name:"Rahul", color:"#f59e0b", last:"Where r u?"},
+        {name:"Priya", color:"#8b5cf6", last:"See you."},
+        {name:"Amit", color:"#10b981", last:"Notes?"},
+        {name:"Suresh", color:"#6366f1", last:"Hello."},
+        {name:"Anjali", color:"#ec4899", last:"Done."},
+        {name:"Emergency", color:"#ef4444", last:"Active"}
+    ];
+
+    let map, marker, activeContact, rulesActive = false;
+    let config = { 
+        batt: { to:"Mom ❤️", msg:"Low Battery"}, 
+        loc: { to:"Dad", msg:"Reached"} 
+    };
+
+    window.onload = () => {
+        renderList(DB);
+        const opts = DB.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        document.getElementById('batt-contact').innerHTML = opts;
+        document.getElementById('loc-contact').innerHTML = opts;
+    };
+
+    function renderList(list) {
+        const div = document.getElementById('contact-list');
+        div.innerHTML = "";
+        list.forEach(c => {
+            const el = document.createElement('div');
+            el.className = 'contact-item';
+            el.onclick = () => openChat(c.name);
+            el.innerHTML = `
+                <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
+                <div style="flex:1">
+                    <div style="font-weight:bold; font-size:16px; margin-bottom:2px;">${c.name}</div>
+                    <div style="color:#8696a0; font-size:14px;">${c.last}</div>
+                </div>
             `;
-        }
+            div.appendChild(el);
+        });
+    }
 
-        function initMap() {
-            if(map) { map.invalidateSize(); return; }
-            map = L.map('map-obj').setView([20.5937, 78.9629], 5);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap', subdomains: 'abcd', maxZoom: 19
-            }).addTo(map);
-            map.on('click', e => placeMarker(e.latlng.lat, e.latlng.lng));
-        }
+    function filterContacts() {
+        const q = document.getElementById('contact-search').value.toLowerCase();
+        renderList(DB.filter(c => c.name.toLowerCase().includes(q)));
+    }
 
-        function searchLocation() {
-            const q = document.getElementById('loc-search').value;
-            if(!q) return;
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`)
-                .then(r => r.json())
-                .then(d => {
-                    if(d.length > 0) {
-                        const { lat, lon } = d[0];
-                        map.setView([lat, lon], 13);
-                        placeMarker(parseFloat(lat), parseFloat(lon));
-                    }
-                });
-        }
-
-        function placeMarker(lat, lng) {
-            if(marker) map.removeLayer(marker);
-            marker = L.marker([lat, lng]).addTo(map);
-        }
-
-        function saveRules() {
-            // Read values from the granular inputs
-            config.batt.contact = document.getElementById('batt-contact-select').value;
-            config.batt.msg = document.getElementById('batt-msg-input').value;
-            
-            config.loc.contact = document.getElementById('loc-contact-select').value;
-            config.loc.msg = document.getElementById('loc-msg-input').value;
-
-            rulesEnabled = true;
-            alert(`Rules Saved!\n\nBattery -> ${config.batt.contact}\nLocation -> ${config.loc.contact}`);
-            switchTab('home');
-        }
-
-        function sendManualMsg() {
-            const input = document.getElementById('final-chat-input');
-            const text = input.value;
-            if(!text) return;
-            addBubble(text, 'out');
-            input.value = "";
-            input.focus();
-        }
-        document.getElementById('final-chat-input').addEventListener('keypress', (e) => { if(e.key==='Enter') sendManualMsg(); });
-
-        function addBubble(text, type, isHtml = false) {
-            const c = document.getElementById('msg-container');
-            const d = document.createElement('div');
-            d.className = `msg ${type}`;
-            if(isHtml) d.innerHTML = text; else d.innerText = text;
-            c.appendChild(d);
-            c.scrollTop = c.scrollHeight;
-        }
-
-        // --- INTELLIGENT TRIGGERS ---
+    function switchTab(t) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
         
-        // 1. LOCATION TRIGGER (Top Left Click)
-        function triggerLocationEvent() {
-            if(!rulesEnabled) { alert("Enable rules first!"); return; }
-            
-            // Auto-switch to the CORRECT contact for this rule
-            const targetContact = config.loc.contact;
-            const customMsg = config.loc.msg;
-
-            if(activeContactName !== targetContact) {
-                // If we are not in the right chat, force switch
-                openChat(targetContact);
-            }
-
-            const html = `
-                <div class="auto-alert">
-                    <strong style="color:var(--accent)">📍 ARRIVED SAFELY</strong><br>
-                    <span style="font-size:0.9rem; color:#d1fae5">${customMsg}</span>
-                    <div class="mini-map-img" style="background-image: url('https://a.basemaps.cartocdn.com/dark_all/13/5000/3000.png');"></div>
-                </div>
-            `;
-            addBubble(html, 'out', true);
+        if(t==='home') {
+            document.getElementById('screen-home').classList.add('active');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+        } else if(t==='config') {
+            document.getElementById('screen-config').classList.add('active');
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            setTimeout(initMap, 200);
         }
+    }
 
-        // 2. BATTERY TRIGGER (Top Right Click)
-        function triggerBatteryEvent() {
-            if(!rulesEnabled) { alert("Enable rules first!"); return; }
+    function openChat(name) {
+        activeContact = name;
+        const c = DB.find(x => x.name === name);
+        document.getElementById('screen-chat').classList.add('active');
+        document.getElementById('chat-title').innerText = c.name;
+        document.getElementById('chat-av').innerText = c.name[0];
+        document.getElementById('chat-av').style.background = c.color;
+        
+        document.getElementById('msg-list').innerHTML = `
+            <div class="msg in">Hey ${name.split(' ')[0]} here.</div>
+            <div class="msg out">${c.last}</div>
+        `;
+    }
 
-            // Auto-switch to the CORRECT contact for this rule
-            const targetContact = config.batt.contact;
-            const customMsg = config.batt.msg;
+    function saveRules() {
+        config.batt.to = document.getElementById('batt-contact').value;
+        config.batt.msg = document.getElementById('batt-msg').value;
+        config.loc.to = document.getElementById('loc-contact').value;
+        config.loc.msg = document.getElementById('loc-msg').value;
+        rulesActive = true;
+        alert("Rules Saved!");
+        switchTab('home');
+    }
 
-            if(activeContactName !== targetContact) {
-                openChat(targetContact);
-            }
-            
-            const icon = document.getElementById('status-battery-icon');
-            icon.classList.remove('fa-battery-half'); icon.classList.add('fa-battery-quarter'); icon.style.color = "var(--danger)";
+    function sendMsg() {
+        const inp = document.getElementById('msg-input');
+        if(!inp.value) return;
+        addMsg(inp.value, 'out');
+        inp.value = "";
+    }
 
-            const html = `
-                <div class="auto-alert" style="border-color:var(--danger); background:rgba(239,68,68,0.15)">
-                    <strong style="color:var(--danger)">⚡ LOW BATTERY (9%)</strong><br>
-                    <span style="font-size:0.9rem; color:#ffdce0">${customMsg}</span>
-                </div>
-            `;
-            addBubble(html, 'out', true);
-        }
+    function addMsg(txt, type, isHTML=false) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        if(isHTML) div.innerHTML = txt; else div.innerText = txt;
+        document.getElementById('msg-list').appendChild(div);
+        const scroll = document.getElementById('chat-scroll');
+        scroll.scrollTop = scroll.scrollHeight;
+    }
 
-    </script>
+    // --- TRIGGERS ---
+    function triggerLocationEvent() {
+        if(!rulesActive) return alert("Enable Rules in Settings first");
+        if(activeContact !== config.loc.to) openChat(config.loc.to);
+        
+        addMsg(`
+            <div class="auto-alert">
+                <b style="color:#00a884">📍 ARRIVED</b><br>
+                <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.loc.msg}</div>
+                <div class="mini-map" style="background-image:url('https://a.basemaps.cartocdn.com/dark_all/13/5000/3000.png')"></div>
+            </div>
+        `, 'out', true);
+    }
+
+    function triggerBatteryEvent() {
+        if(!rulesActive) return alert("Enable Rules in Settings first");
+        if(activeContact !== config.batt.to) openChat(config.batt.to);
+
+        document.getElementById('batt-icon').style.color = "#ef4444";
+        addMsg(`
+            <div class="auto-alert" style="border-color:#ef4444; background:rgba(239,68,68,0.2)">
+                <b style="color:#ef4444">⚡ LOW BATTERY</b><br>
+                <div style="font-size:14px; color:#e9edef; margin-top:5px;">${config.batt.msg}</div>
+            </div>
+        `, 'out', true);
+    }
+
+    // --- MAP ---
+    function initMap() {
+        if(map) { map.invalidateSize(); return; }
+        map = L.map('map-obj').setView([20.59, 78.96], 5);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {attribution:''}).addTo(map);
+        map.on('click', e => { if(marker) map.removeLayer(marker); marker = L.marker(e.latlng).addTo(map); });
+    }
+    function searchLoc() {
+        const q = document.getElementById('loc-search').value;
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`).then(r=>r.json()).then(d=>{
+            if(d.length){ map.setView([d[0].lat, d[0].lon], 13); if(marker)map.removeLayer(marker); marker=L.marker([d[0].lat, d[0].lon]).addTo(map); }
+        });
+    }
+
+</script>
 </body>
 </html>
